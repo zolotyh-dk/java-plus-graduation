@@ -1,0 +1,13 @@
+{
+  "status": "BAD_REQUEST",
+  "reason": "Wrong request format",
+  "message": "There is an error in parameter 'start'",
+  "errors": [
+    {
+      "field": "start",
+      "error": "no value provided",
+      "value": null
+    }
+  ],
+  "timestamp": "2000-01-01 00:00:01"
+}

@@ -1,0 +1,25 @@
+spring:
+  application.name: Explore With Me
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/ewm
+    username: ewm
+    password: ewm
+  jpa:
+    hibernate.ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  sql.init.mode: always
+logging.level:
+  org.springframework.orm.jpa: INFO
+  org.springframework.transaction: INFO
+server.port: 8080
+stats:
+  server:
+    uri: http://localhost:9090
+ewm:
+  timeout:
+    admin: PT1H
+    user: PT2H

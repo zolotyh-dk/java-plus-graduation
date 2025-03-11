@@ -1,0 +1,10 @@
+[
+  {
+    "level": "INFO",
+    "message": "Received POST at http://somehost/home?value=none"
+  },
+  {
+    "level": "INFO",
+    "message": "Responded to POST http://somehost/home?value=none: [ViewStatsDto[app=mainService, uri=endpointA, hits=99]]"
+  }
+]

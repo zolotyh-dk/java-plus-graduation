@@ -1,0 +1,10 @@
+[
+  {
+    "level": "INFO",
+    "message": "Отправляем запрос на сохранение статистики: EndpointHitDto[app=mainService, uri=endpointA, ip=127.0.0.1, timestamp=2000-01-31T13:30:55]"
+  },
+  {
+    "level": "ERROR",
+    "message": "Ошибка при выполнении POST запроса /hit 400 Bad Request: [no body]"
+  }
+]

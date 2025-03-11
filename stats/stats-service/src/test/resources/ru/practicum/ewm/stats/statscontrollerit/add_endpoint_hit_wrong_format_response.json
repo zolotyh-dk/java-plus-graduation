@@ -1,0 +1,18 @@
+{
+  "status": "BAD_REQUEST",
+  "reason": "Wrong request format",
+  "message": "There are errors in fields 'app', 'uri'",
+  "errors": [
+    {
+      "field": "app",
+      "error": "must not be blank",
+      "value": null
+    },
+    {
+      "field": "uri",
+      "error": "must not be blank",
+      "value": null
+    }
+  ],
+  "timestamp": "2000-01-01 00:00:01"
+}

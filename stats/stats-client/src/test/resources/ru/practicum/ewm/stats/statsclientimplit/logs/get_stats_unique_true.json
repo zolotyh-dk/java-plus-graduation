@@ -1,0 +1,10 @@
+[
+  {
+    "level": "INFO",
+    "message": "Отправляем запрос на получение статистики с параметрами start=2000-01-01T00:00:01, end=2000-02-02T00:00:02, uris=[endpointA], unique=true"
+  },
+  {
+    "level": "INFO",
+    "message": "В ответ на запрос статистики получили [ViewStatsDto[app=mainService, uri=endpointA, hits=99]]"
+  }
+]

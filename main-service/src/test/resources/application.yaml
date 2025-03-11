@@ -1,0 +1,15 @@
+spring:
+  main.banner-mode: OFF
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:ewm
+    username: ewm
+    password: ewm
+  jpa.hibernate.ddl-auto: validate
+stats:
+  server:
+    uri: http://localhost:9090
+ewm:
+  timeout:
+    admin: PT1H
+    user: PT2H
