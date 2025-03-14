@@ -1,23 +1,16 @@
 spring:
-  application.name: Explore With Me (Stats)
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/ewm_stats
-    username: stats
-    password: stats
-  jpa:
-    hibernate.ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-  sql.init.mode: always
-
-logging.level:
-  org.springframework.orm.jpa: INFO
-  org.springframework.transaction: INFO
-
-server.port: 0
+  application.name: stats-service
+  config:
+    import: 'configserver:'
+  cloud:
+    config:
+      discovery:
+        service-id: config-server
+        enabled: true
+      fail-fast: true
+      retry:
+        use-random-policy: true
+        max-interval: 10000
 
 eureka:
   instance:
