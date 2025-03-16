@@ -16,7 +16,8 @@ logging.level:
   org.springframework.orm.jpa: INFO
   org.springframework.transaction: INFO
 
-server.port: 0
+server:
+  port: 0
 
 #stats:
 #  server:
