@@ -17,7 +17,7 @@ eureka:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://discovery-server:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
 
 server:

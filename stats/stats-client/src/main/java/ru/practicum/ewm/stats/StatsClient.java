@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@FeignClient(name = "statsClient")
+@FeignClient(name = "stats-service")
 public interface StatsClient {
     @PostMapping("/hit")
     void saveHit(@RequestBody EndpointHitDto hitDto);
