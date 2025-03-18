@@ -12,10 +12,10 @@ import java.util.List;
 
 @FeignClient(name = "statsClient")
 public interface StatsClient {
-    @PostMapping( "/hit")
+    @PostMapping("/hit")
     void saveHit(@RequestBody EndpointHitDto hitDto);
 
-    @GetMapping( "/stats")
+    @GetMapping("/stats")
     List<ViewStatsDto> getStats(@RequestParam("start") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
                                 @RequestParam("end") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
                                 @RequestParam("uris") List<String> uris,
