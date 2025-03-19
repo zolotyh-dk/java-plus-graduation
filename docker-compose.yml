@@ -77,6 +77,8 @@ services:
       - POSTGRES_DB=ewm-stats
     networks:
       - ewm-net
+    volumes:
+      - stats_data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -91,8 +93,8 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
-#      stats-server:
-#        condition: service_healthy
+      stats-server:
+        condition: service_healthy
     networks:
       - ewm-net
     environment:
@@ -116,6 +118,8 @@ services:
       - POSTGRES_PASSWORD=root
       - POSTGRES_USER=root
       - POSTGRES_DB=ewm-main
+    volumes:
+      - ewm_data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -124,3 +128,7 @@ services:
 
 networks:
   ewm-net:
+
+volumes:
+  stats_data:
+  ewm_data:
