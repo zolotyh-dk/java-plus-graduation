@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/ewm
-    username: ewm
-    password: ewm
   jpa:
     hibernate.ddl-auto: none
     show-sql: true
@@ -19,11 +14,30 @@ logging.level:
 server:
   port: 0
 
-#stats:
-#  server:
-#    uri: http://localhost:9090
-
 ewm:
   timeout:
     admin: PT1H
     user: PT2H
+---
+
+spring:
+  config:
+    activate:
+      on-profile: default
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/ewm
+    username: ewm
+    password: ewm
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:ewm-dev
+    username: dev
+    password: dev
