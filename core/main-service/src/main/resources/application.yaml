@@ -1,25 +1,22 @@
 spring:
-  application.name: Explore With Me
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/ewm
-    username: ewm
-    password: ewm
-  jpa:
-    hibernate.ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-  sql.init.mode: always
-logging.level:
-  org.springframework.orm.jpa: INFO
-  org.springframework.transaction: INFO
-server.port: 8080
-stats:
-  server:
-    uri: http://localhost:9090
-ewm:
-  timeout:
-    admin: PT1H
-    user: PT2H
+  application:
+    name: main-service
+  config:
+    import: 'configserver:'
+  cloud:
+    config:
+      discovery:
+        service-id: config-server
+        enabled: true
+      fail-fast: true
+      retry:
+        use-random-policy: true
+        max-interval: 10000
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true

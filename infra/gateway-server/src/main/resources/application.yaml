@@ -1,8 +1,8 @@
 spring:
   application:
-    name: stats-service
+    name: gateway-server
   config:
-    import: "configserver:"
+    import: 'configserver:'
   cloud:
     config:
       discovery:
