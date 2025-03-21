@@ -15,27 +15,16 @@ import ru.practicum.ewm.exception.FieldValidationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.exception.ParameterValidationException;
-import ru.practicum.ewm.request.Request;
-import ru.practicum.ewm.request.RequestDto;
-import ru.practicum.ewm.request.RequestMapper;
-import ru.practicum.ewm.request.RequestRepository;
-import ru.practicum.ewm.request.RequestState;
+import ru.practicum.ewm.request.*;
 import ru.practicum.ewm.stats.StatsClient;
 import ru.practicum.ewm.stats.ViewStatsDto;
-import ru.practicum.ewm.user.User;
-import ru.practicum.ewm.user.UserService;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +37,6 @@ class EventServiceImpl implements EventService {
     private static final LocalDateTime VIEWS_TO = LocalDateTime.of(2100, Month.DECEMBER, 31, 23, 59, 59);
 
     private final Clock clock;
-    private final UserService userService;
     private final CategoryService categoryService;
     private final StatsClient statsClient;
     private final EventRepository repository;
@@ -58,7 +46,6 @@ class EventServiceImpl implements EventService {
 
     EventServiceImpl(
             final Clock clock,
-            final UserService userService,
             final CategoryService categoryService,
             final StatsClient statsClient,
             final EventRepository repository,
@@ -67,7 +54,6 @@ class EventServiceImpl implements EventService {
             @Value("${ewm.timeout.user}") final Duration userTimeout
     ) {
         this.clock = clock;
-        this.userService = userService;
         this.categoryService = categoryService;
         this.statsClient = statsClient;
         this.repository = repository;
@@ -80,7 +66,7 @@ class EventServiceImpl implements EventService {
     @Transactional
     public Event add(final Event event) {
         validateEventDate(event.getEventDate(), userTimeout);
-        event.setInitiator(fetchUser(event.getInitiator()));
+        requireUserExists(event.getInitiatorId());
         event.setCategory(fetchCategory(event.getCategory()));
         final Event savedEvent = repository.save(event);
         log.info("Added event with id = {}: {}", savedEvent.getId(), savedEvent);
@@ -119,7 +105,7 @@ class EventServiceImpl implements EventService {
         final QEvent event = new QEvent("event");
         Optional.ofNullable(filter.text()).ifPresent(text -> predicates.add(event.annotation.likeIgnoreCase(text)
                 .or(event.description.likeIgnoreCase(text))));
-        Optional.ofNullable(filter.users()).ifPresent(users -> predicates.add(event.initiator.id.in(users)));
+        Optional.ofNullable(filter.users()).ifPresent(users -> predicates.add(event.initiatorId.in(users)));
         Optional.ofNullable(filter.categories()).ifPresent(categories ->
                 predicates.add(event.category.id.in(categories)));
         Optional.ofNullable(filter.states()).ifPresent(states -> predicates.add(event.state.in(states)));
@@ -279,11 +265,9 @@ class EventServiceImpl implements EventService {
         Optional.ofNullable(patch.state()).ifPresent(event::setState);
     }
 
-    private User fetchUser(final User user) {
-        if (user == null || user.getId() == null) {
-            throw new AssertionError();
-        }
-        return userService.getById(user.getId());
+    private void requireUserExists(final long userId) {
+        //TODO: проверка существования пользователя через UserClient
+        return;
     }
 
     private Category fetchCategory(final Category category) {

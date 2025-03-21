@@ -3,7 +3,6 @@ package ru.practicum.ewm.event;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.category.CategoryMapper;
-import ru.practicum.ewm.user.UserMapper;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -14,7 +13,6 @@ import java.util.List;
 public class EventMapper {
 
     private final Clock clock;
-    private final UserMapper userMapper;
     private final CategoryMapper categoryMapper;
 
     Event mapToEvent(final Long userId, final NewEventDto dto) {
@@ -22,7 +20,7 @@ public class EventMapper {
             return null;
         }
         final Event event = new Event();
-        event.setInitiator(userMapper.mapToUser(userId));
+        event.setInitiatorId(userId);
         if (dto != null) {
             event.setTitle(dto.title());
             event.setCategory(categoryMapper.mapToCategory(dto.category()));
@@ -93,7 +91,7 @@ public class EventMapper {
         }
         return EventFullDto.builder()
                 .id(event.getId())
-                .initiator(userMapper.mapToShortDto(event.getInitiator()))
+                .initiatorId(event.getInitiatorId())
                 .title(event.getTitle())
                 .category(categoryMapper.mapToDto(event.getCategory()))
                 .eventDate(event.getEventDate())
@@ -126,7 +124,7 @@ public class EventMapper {
         }
         return EventShortDto.builder()
                 .id(event.getId())
-                .initiator(userMapper.mapToShortDto(event.getInitiator()))
+                .initiator(event.getInitiatorId())
                 .title(event.getTitle())
                 .category(categoryMapper.mapToDto(event.getCategory()))
                 .eventDate(event.getEventDate())

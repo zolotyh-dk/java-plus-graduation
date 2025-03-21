@@ -9,8 +9,6 @@ import ru.practicum.ewm.event.EventService;
 import ru.practicum.ewm.event.EventState;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotPossibleException;
-import ru.practicum.ewm.user.User;
-import ru.practicum.ewm.user.UserService;
 
 import java.util.List;
 
@@ -20,23 +18,24 @@ import java.util.List;
 class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final EventService eventService;
-    private final UserService userService;
 
     @Override
     public RequestDto create(long userId, long eventId) {
-        if (!requestRepository.findAllByRequesterIdAndEventIdAndStatusNotLike(userId, eventId,
-                RequestState.CANCELED).isEmpty())
+        requireUserExists(userId);
+        if (!requestRepository
+                .findAllByRequesterIdAndEventIdAndStatusNotLike(userId, eventId, RequestState.CANCELED)
+                .isEmpty()) {
             throw new NotPossibleException("Request already exists");
-        User user = userService.getById(userId);
+        }
         Event event = eventService.getById(eventId);
-        if (userId == event.getInitiator().getId())
+        if (userId == event.getInitiatorId())
             throw new NotPossibleException("User is Initiator of event");
         if (!event.getState().equals(EventState.PUBLISHED))
             throw new NotPossibleException("Event is not published");
         if (event.getParticipantLimit() != 0 && event.getConfirmedRequests() >= event.getParticipantLimit())
                 throw new NotPossibleException("Request limit exceeded");
         Request newRequest = new Request();
-        newRequest.setRequester(user);
+        newRequest.setRequesterId(userId);
         newRequest.setEvent(event);
         if (event.isRequestModeration() && event.getParticipantLimit() != 0) {
             newRequest.setStatus(RequestState.PENDING);
@@ -48,7 +47,7 @@ class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestDto> getAllRequestByUserId(final long userId) {
-        userService.getById(userId);
+        requireUserExists(userId);
         return requestRepository.findAllByRequesterId(userId).stream()
                 .map(RequestMapper::mapToRequestDto)
                 .toList();
@@ -57,12 +56,16 @@ class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public RequestDto cancel(final long userId, final long requestId) {
-        userService.getById(userId);
+        requireUserExists(userId);
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException(Request.class, requestId));
-        if (!request.getRequester().getId().equals(userId))
+        if (!request.getRequesterId().equals(userId))
             throw new NotPossibleException("Request is not by user");
         request.setStatus(RequestState.CANCELED);
         return RequestMapper.mapToRequestDto(requestRepository.save(request));
+    }
+
+    private void requireUserExists(long userId) {
+        //TODO: проверить существование пользователя через UserClient
     }
 }

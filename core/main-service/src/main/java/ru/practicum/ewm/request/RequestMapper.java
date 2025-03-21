@@ -9,7 +9,7 @@ public class RequestMapper {
 
     public static RequestDto mapToRequestDto(Request request) {
         return RequestDto.builder()
-                .requester(request.getRequester().getId())
+                .requester(request.getRequesterId())
                 .id(request.getId())
                 .created(request.getCreated())
                 .event(request.getEvent().getId())

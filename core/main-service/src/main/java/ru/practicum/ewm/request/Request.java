@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 import ru.practicum.ewm.event.Event;
-import ru.practicum.ewm.user.User;
 
 import java.time.LocalDateTime;
 
@@ -27,9 +26,8 @@ public class Request {
     @CreationTimestamp
     private LocalDateTime created;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
-    private User requester;
+    private Long requesterId;
 
     @Enumerated(EnumType.STRING)
     @NotNull

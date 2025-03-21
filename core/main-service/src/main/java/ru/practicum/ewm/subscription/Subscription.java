@@ -3,7 +3,6 @@ package ru.practicum.ewm.subscription;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import ru.practicum.ewm.user.User;
 
 @Entity
 @Table(name = "subscriptions")
@@ -14,11 +13,9 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subscriber_id", nullable = false)
-    private User subscriber;
+    @Column(name = "subscriber_id", nullable = false)
+    private Long subscriberId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_id", nullable = false)
-    private User target;
+    @Column(name = "target_id", nullable = false)
+    private Long targetId;
 }
