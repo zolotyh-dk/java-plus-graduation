@@ -11,8 +11,6 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

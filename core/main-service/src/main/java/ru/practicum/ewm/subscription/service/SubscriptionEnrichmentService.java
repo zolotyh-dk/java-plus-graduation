@@ -10,10 +10,7 @@ import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.client.UserClient;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,10 +42,6 @@ public class SubscriptionEnrichmentService {
         if (!userClient.existsById(userId)) {
             throw new NotFoundException("User", userId);
         }
-    }
-
-    private UserShortDto findUser(Event event) {
-        return findUsers(Collections.singletonList(event)).getFirst();
     }
 
     private List<UserShortDto> findUsers(List<Event> events) {
