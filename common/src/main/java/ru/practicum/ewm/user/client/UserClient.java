@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.util.List;
-import java.util.Set;
 
 @FeignClient(name = "user-service")
 public interface UserClient {
