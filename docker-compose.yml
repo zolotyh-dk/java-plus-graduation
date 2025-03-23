@@ -115,9 +115,9 @@ services:
     networks:
       - ewm-net
     environment:
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_USER=root
       - POSTGRES_DB=ewm-main
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
     volumes:
       - ewm_data:/var/lib/postgresql/data
     healthcheck:
@@ -126,9 +126,49 @@ services:
       interval: 10s
       retries: 15
 
+  user-service:
+    build: core/user-service
+    container_name: user-service
+    depends_on:
+      users-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - ewm-net
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://users-db:5432/users
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SERVER_PORT=8181
+    healthcheck:
+      test: "curl --fail --silent localhost:8181/actuator/health | grep UP || exit 1"
+      timeout: 5s
+      interval: 25s
+      retries: 10
+
+  users-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-users-db
+    environment:
+      - POSTGRES_DB=users
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+    networks:
+      - ewm-net
+    volumes:
+      - users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 10s
+      retries: 10
+
 networks:
   ewm-net:
 
 volumes:
   stats_data:
   ewm_data:
+  users_data:

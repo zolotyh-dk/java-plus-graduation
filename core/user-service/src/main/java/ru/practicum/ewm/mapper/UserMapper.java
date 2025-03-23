@@ -3,7 +3,7 @@ package ru.practicum.ewm.mapper;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.dto.NewUserRequest;
 import ru.practicum.ewm.dto.UserDto;
-import ru.practicum.ewm.dto.UserShortDto;
+import ru.practicum.ewm.user.dto.UserShortDto;
 import ru.practicum.ewm.entity.User;
 
 import java.util.List;

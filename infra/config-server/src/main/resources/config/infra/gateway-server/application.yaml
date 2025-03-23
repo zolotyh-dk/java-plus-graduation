@@ -5,6 +5,10 @@ spring:
         locator:
           enabled: true
       routes:
+        - id: user-service_route
+          uri: lb://user-service
+          predicates:
+            - Path=/admin/users/**
         - id: main-service-route
           uri: lb://main-service
           predicates:

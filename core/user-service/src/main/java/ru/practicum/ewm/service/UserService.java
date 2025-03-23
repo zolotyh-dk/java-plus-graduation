@@ -18,4 +18,6 @@ public interface UserService {
     UserDto save(NewUserRequest requestDto);
 
     void delete(long id);
+
+    boolean existsById(long id);
 }

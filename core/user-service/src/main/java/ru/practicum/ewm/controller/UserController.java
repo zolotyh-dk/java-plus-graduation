@@ -59,4 +59,12 @@ public class UserController extends HttpRequestResponseLogger {
         userService.delete(id);
         logHttpResponse(request);
     }
+
+    @GetMapping("/exists/{id}")
+    public boolean exists(@PathVariable final long id, final HttpServletRequest request) {
+        logHttpRequest(request);
+        boolean isExists = userService.existsById(id);
+        logHttpResponse(request, isExists);
+        return isExists;
+    }
 }

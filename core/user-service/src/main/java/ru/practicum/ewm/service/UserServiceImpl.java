@@ -54,4 +54,11 @@ public class UserServiceImpl implements UserService {
         }
         userRepository.deleteById(id);
     }
+
+    @Override
+    public boolean existsById(long id) {
+        boolean isExists = userRepository.existsById(id);
+        log.debug("User with id {} exists = {}", id, isExists);
+        return isExists;
+    }
 }
