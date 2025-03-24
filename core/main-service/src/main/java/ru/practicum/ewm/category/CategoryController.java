@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.common.HttpRequestResponseLogger;
+import ru.practicum.ewm.event.dto.CategoryDto;
 
 import java.util.List;
 

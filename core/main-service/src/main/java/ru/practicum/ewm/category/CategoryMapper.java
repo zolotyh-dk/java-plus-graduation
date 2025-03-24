@@ -1,5 +1,7 @@
 package ru.practicum.ewm.category;
 
+import ru.practicum.ewm.event.dto.CategoryDto;
+
 import java.util.List;
 
 public interface CategoryMapper {

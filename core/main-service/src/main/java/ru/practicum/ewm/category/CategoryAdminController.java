@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.common.HttpRequestResponseLogger;
+import ru.practicum.ewm.event.dto.CategoryDto;
 
 @RestController
 @RequestMapping("/admin/categories")

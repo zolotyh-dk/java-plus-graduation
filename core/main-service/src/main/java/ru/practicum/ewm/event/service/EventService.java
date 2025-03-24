@@ -2,12 +2,9 @@ package ru.practicum.ewm.event.service;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventPatch;
-import ru.practicum.ewm.event.dto.EventRequestStatusDto;
-import ru.practicum.ewm.event.dto.UpdateEventRequestStatusDto;
-import ru.practicum.ewm.request.dto.RequestDto;
+import ru.practicum.ewm.event.model.Event;
 
 import java.util.List;
 
@@ -27,7 +24,5 @@ public interface EventService {
 
     Event update(long id, @NotNull @Valid EventPatch patch, long userId);
 
-    List<RequestDto> getRequests(long userId, long eventId);
-
-    EventRequestStatusDto processRequests(long id, @NotNull @Valid UpdateEventRequestStatusDto dto, long userId);
+    boolean existsByIdAndUserId(long userId, long eventId);
 }

@@ -4,7 +4,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import ru.practicum.ewm.category.Category;
-import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.validation.NotBlankOrNull;
 
 import java.time.LocalDateTime;

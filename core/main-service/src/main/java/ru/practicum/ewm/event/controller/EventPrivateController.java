@@ -86,4 +86,14 @@ class EventPrivateController extends HttpRequestResponseLogger {
         logHttpResponse(httpRequest, dto);
         return dto;
     }
+
+    @GetMapping("/exists/{eventId}")
+    boolean exists(@PathVariable final long userId,
+                   @PathVariable final long eventId,
+                   final HttpServletRequest httpRequest) {
+        logHttpRequest(httpRequest);
+        final boolean isExists = facade.existsByIdAndUserId(userId, eventId);
+        logHttpResponse(httpRequest, isExists);
+        return isExists;
+    }
 }

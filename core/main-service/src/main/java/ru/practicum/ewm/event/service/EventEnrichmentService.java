@@ -65,6 +65,10 @@ public class EventEnrichmentService {
         return eventMapper.mapToFullDto(event, initiator);
     }
 
+    public boolean existsByIdAndUserId(long userId, long eventId) {
+        return eventService.existsByIdAndUserId(userId, eventId);
+    }
+
     private void checkUserExists(long userId) {
         if (!userClient.existsById(userId)) {
             throw new NotFoundException("User", userId);
@@ -79,4 +83,6 @@ public class EventEnrichmentService {
         List<Long> userIds = events.stream().map(Event::getInitiatorId).toList();
         return userClient.findAllByIdIn(userIds);
     }
+
+
 }

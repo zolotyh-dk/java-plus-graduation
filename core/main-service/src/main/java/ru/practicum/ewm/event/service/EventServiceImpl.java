@@ -7,11 +7,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryService;
-import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.EventFilter;
+import ru.practicum.ewm.event.dto.EventPatch;
+import ru.practicum.ewm.event.dto.EventSort;
+import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.repository.EventRepository;
@@ -19,14 +21,9 @@ import ru.practicum.ewm.exception.FieldValidationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.exception.ParameterValidationException;
-import ru.practicum.ewm.request.dto.RequestDto;
-import ru.practicum.ewm.request.mapper.RequestMapper;
-import ru.practicum.ewm.request.model.Request;
-import ru.practicum.ewm.request.model.RequestState;
-import ru.practicum.ewm.request.repository.RequestRepository;
+import ru.practicum.ewm.request.dto.RequestState;
 import ru.practicum.ewm.stats.StatsClient;
 import ru.practicum.ewm.stats.ViewStatsDto;
-import ru.practicum.ewm.user.client.UserClient;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -48,8 +45,6 @@ class EventServiceImpl implements EventService {
     private final CategoryService categoryService;
     private final StatsClient statsClient;
     private final EventRepository repository;
-    private final RequestMapper requestMapper;
-    private final RequestRepository requestRepository;
     private final Duration adminTimeout;
     private final Duration userTimeout;
 
@@ -57,8 +52,7 @@ class EventServiceImpl implements EventService {
             final Clock clock,
             final CategoryService categoryService,
             final StatsClient statsClient,
-            final EventRepository repository, RequestMapper requestMapper,
-            final RequestRepository requestRepository, UserClient userClient,
+            final EventRepository repository,
             @Value("${ewm.timeout.admin}") final Duration adminTimeout,
             @Value("${ewm.timeout.user}") final Duration userTimeout
     ) {
@@ -66,8 +60,6 @@ class EventServiceImpl implements EventService {
         this.categoryService = categoryService;
         this.statsClient = statsClient;
         this.repository = repository;
-        this.requestMapper = requestMapper;
-        this.requestRepository = requestRepository;
         this.adminTimeout = adminTimeout;
         this.userTimeout = userTimeout;
     }
@@ -167,44 +159,8 @@ class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<RequestDto> getRequests(final long userId, final long eventId) {
-        getByIdAndUserId(eventId, userId);
-        return requestMapper.mapToRequestDto(requestRepository.findAllByEventIdAndEventInitiatorId(eventId, userId));
-    }
-
-    @Override
-    @Transactional
-    public EventRequestStatusDto processRequests(final long id, final UpdateEventRequestStatusDto dto,
-                                                 final long userId) {
-        final Event event = getByIdAndUserId(id, userId);
-        if (CollectionUtils.isEmpty(dto.requestIds())) {
-            return new EventRequestStatusDto(List.of(), List.of());
-        }
-        final List<Request> requests = requestRepository.findAllByEventIdAndEventInitiatorIdAndIdIn(id, userId,
-                        dto.requestIds());
-        requireAllExist(dto.requestIds(), requests);
-        requireAllHavePendingStatus(requests);
-
-        List<Request> confirmedRequests = List.of();
-        List<Request> rejectedRequests = List.of();
-        if (dto.status() == RequestState.REJECTED) {
-            rejectedRequests = setStatusAndSaveAll(requests, RequestState.REJECTED);
-        } else {
-            final long availableSlots = event.getParticipantLimit() == 0
-                    ? Long.MAX_VALUE
-                    : event.getParticipantLimit() - event.getConfirmedRequests();
-            if (requests.size() > availableSlots) {
-                throw new NotPossibleException("Not enough available participation slots");
-            }
-            confirmedRequests = setStatusAndSaveAll(requests, RequestState.CONFIRMED);
-            if (requests.size() == availableSlots) {
-                final List<Request> pendingRequests = requestRepository.findAllByEventIdAndEventInitiatorIdAndStatus(id,
-                        userId, RequestState.PENDING);
-                rejectedRequests = setStatusAndSaveAll(pendingRequests, RequestState.REJECTED);
-            }
-        }
-        return new EventRequestStatusDto(requestMapper.mapToRequestDto(confirmedRequests),
-                requestMapper.mapToRequestDto(rejectedRequests));
+    public boolean existsByIdAndUserId(long userId, long eventId) {
+        return repository.existsByIdAndInitiatorId(userId, eventId);
     }
 
     private void validateEventDate(final LocalDateTime eventDate, final Duration timeLimit) {
@@ -277,42 +233,5 @@ class EventServiceImpl implements EventService {
             throw new AssertionError();
         }
         return categoryService.getById(category.getId());
-    }
-
-    private void requireAllExist(final List<Long> ids, final List<Request> requests) {
-        final Set<Long> idsFound = requests.stream()
-                .map(Request::getId)
-                .collect(Collectors.toSet());
-        final Set<Long> idsMissing = ids.stream()
-                .filter(id -> !idsFound.contains(id))
-                .collect(Collectors.toSet());
-        if (!idsMissing.isEmpty()) {
-            throw new NotFoundException(Request.class, idsMissing);
-        }
-    }
-
-    private void requireAllHavePendingStatus(final List<Request> requests) {
-        final Set<Long> idsNotPending = requests.stream()
-                .filter(request -> request.getStatus() != RequestState.PENDING)
-                .map(Request::getId)
-                .collect(Collectors.toSet());
-        if (!idsNotPending.isEmpty()) {
-            final String idsStr = idsNotPending.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(", "));
-            throw new NotPossibleException("Request(s) %s with wrong status (must be %s)"
-                    .formatted(idsStr, RequestState.PENDING));
-        }
-    }
-
-    private List<Request> setStatusAndSaveAll(final List<Request> requests, final RequestState status) {
-        if (CollectionUtils.isEmpty(requests)) {
-            log.info("No requests to update status to %s", status);
-            return List.of();
-        }
-        requests.forEach(request -> request.setStatus(status));
-        final List<Request> savedRequests = requestRepository.saveAll(requests);
-        log.info("%s set to status %s", savedRequests.size(), status);
-        return savedRequests;
     }
 }

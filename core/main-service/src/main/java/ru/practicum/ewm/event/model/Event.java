@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.event.dto.EventState;
+import ru.practicum.ewm.event.dto.Location;
 
 import java.time.LocalDateTime;
 

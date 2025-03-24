@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.service.EventRequestStats;
-import ru.practicum.ewm.request.model.RequestState;
+import ru.practicum.ewm.request.dto.RequestState;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,4 +24,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
     @Query("select e.id as id, count(r.id) as requests from Event e join Request r on e = r.event "
             + "where e.id in :ids and r.status = :status group by e.id")
     List<EventRequestStats> getRequestStats(@Param("ids") List<Long> ids, @Param("status") final RequestState status);
+
+    boolean existsByIdAndInitiatorId(long userId, long eventId);
 }

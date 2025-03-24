@@ -1,6 +1,7 @@
 package ru.practicum.ewm.category;
 
 import org.springframework.stereotype.Component;
+import ru.practicum.ewm.event.dto.CategoryDto;
 
 import java.util.List;
 

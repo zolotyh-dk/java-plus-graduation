@@ -7,7 +7,7 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 import java.time.LocalDateTime;
 
 @Builder(toBuilder = true)
-public record EventShortDto(
+public record EventFullDto(
         Long id,
         UserShortDto initiator,
         String title,
@@ -16,9 +16,22 @@ public record EventShortDto(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime eventDate,
 
+        Location location,
         String annotation,
+        String description,
+        Long participantLimit,
         Boolean paid,
+        Boolean requestModeration,
         Long confirmedRequests,
-        Long views
-) {
+        Long views,
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime createdOn,
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime publishedOn,
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING)
+        EventState state) {
+
 }
