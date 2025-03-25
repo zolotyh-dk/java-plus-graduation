@@ -83,6 +83,4 @@ public class EventEnrichmentService {
         List<Long> userIds = events.stream().map(Event::getInitiatorId).toList();
         return userClient.findAllByIdIn(userIds);
     }
-
-
 }
