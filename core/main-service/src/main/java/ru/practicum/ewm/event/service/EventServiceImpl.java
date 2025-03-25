@@ -43,7 +43,6 @@ class EventServiceImpl implements EventService {
 
     private final Clock clock;
     private final CategoryService categoryService;
-    private final StatsClient statsClient;
     private final EventRepository repository;
     private final Duration adminTimeout;
     private final Duration userTimeout;
@@ -58,7 +57,6 @@ class EventServiceImpl implements EventService {
     ) {
         this.clock = clock;
         this.categoryService = categoryService;
-        this.statsClient = statsClient;
         this.repository = repository;
         this.adminTimeout = adminTimeout;
         this.userTimeout = userTimeout;
@@ -183,26 +181,6 @@ class EventServiceImpl implements EventService {
 
     private LocalDateTime now() {
         return LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
-    }
-
-    private void fetchConfirmedRequestsAndHits(final List<Event> events) {
-        final List<Long> ids = events.stream()
-                .map(Event::getId)
-                .toList();
-        final List<String> uris = ids.stream()
-                .map(id -> "/events/" + id)
-                .toList();
-        final Map<Long, Long> confirmedRequests = repository.getRequestStats(ids, RequestState.CONFIRMED).stream()
-                .collect(Collectors.toMap(EventRequestStats::getId, EventRequestStats::getRequests));
-        final Map<String, Long> views = statsClient.getStats(VIEWS_FROM, VIEWS_TO, uris, true).stream()
-                .collect(Collectors.toMap(ViewStatsDto::uri, ViewStatsDto::hits));
-        events.forEach(event -> event.setConfirmedRequests(confirmedRequests.getOrDefault(event.getId(), 0L)));
-        events.forEach(event -> event.setViews(views.getOrDefault("/events/" + event.getId(), 0L)));
-    }
-
-    private Event fetchConfirmedRequestsAndHits(final Event event) {
-        fetchConfirmedRequestsAndHits(List.of(event));
-        return event;
     }
 
     private Event updateInternally(final Event event, final EventPatch patch) {

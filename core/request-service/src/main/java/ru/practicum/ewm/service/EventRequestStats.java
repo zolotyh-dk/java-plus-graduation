@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.service;
+package ru.practicum.ewm.service;
 
 public interface EventRequestStats {
 

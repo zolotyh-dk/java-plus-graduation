@@ -8,6 +8,7 @@ import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.model.Request;
 
 import java.util.List;
+import java.util.Map;
 
 public interface RequestService {
     Request create(long userId, EventFullDto event);
@@ -21,4 +22,6 @@ public interface RequestService {
     Pair<List<Request>, List<Request>> processRequests(EventFullDto event,
                                                        @NotNull @Valid UpdateEventRequestStatusDto dto,
                                                        long userId);
+
+    Map<Long, Long> getConfirmedRequestsStats(List<Long> eventIds);
 }

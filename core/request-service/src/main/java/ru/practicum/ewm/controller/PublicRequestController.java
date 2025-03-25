@@ -9,6 +9,8 @@ import ru.practicum.ewm.dto.RequestDto;
 import ru.practicum.ewm.service.RequestEnrichmentService;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users/{userId}/requests")
@@ -39,5 +41,15 @@ public class PublicRequestController extends HttpRequestResponseLogger {
         RequestDto requestDto = facade.cancel(userId, requestId);
         logHttpResponse(request, requestDto);
         return requestDto;
+    }
+
+    @GetMapping("/stats")
+    Map<Long, Long> getRequestStats(@PathVariable final long userId,
+                                    @RequestBody List<Long> eventIds,
+                                    final HttpServletRequest request) {
+        logHttpRequest(request);
+        Map<Long, Long> confirmedRequests = facade.getConfirmedRequestStats(eventIds);
+        logHttpResponse(request, confirmedRequests);
+        return confirmedRequests;
     }
 }

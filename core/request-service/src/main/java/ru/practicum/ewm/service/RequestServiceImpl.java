@@ -16,6 +16,7 @@ import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.request.dto.RequestState;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -101,6 +102,13 @@ class RequestServiceImpl implements RequestService {
             }
         }
         return Pair.of(confirmedRequests,rejectedRequests);
+    }
+
+    @Override
+    public Map<Long, Long> getConfirmedRequestsStats(List<Long> eventIds) {
+        List<EventRequestStats> confirmedRequestStats = requestRepository.getConfirmedRequestStats(eventIds);
+        return confirmedRequestStats.stream()
+                .collect(Collectors.toMap(EventRequestStats::getId, EventRequestStats::getRequests));
     }
 
     private void requireAllExist(final List<Long> ids, final List<Request> requests) {
