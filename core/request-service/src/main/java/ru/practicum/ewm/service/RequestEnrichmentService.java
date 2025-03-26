@@ -14,7 +14,6 @@ import ru.practicum.ewm.model.Request;
 import ru.practicum.ewm.user.client.UserClient;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -67,9 +66,5 @@ public class RequestEnrichmentService {
 
     private EventFullDto getEvent(long userId, long eventId) {
         return eventClient.get(userId, eventId);
-    }
-
-    public Map<Long, Long> getConfirmedRequestStats(List<Long> eventIds) {
-        return requestService.getConfirmedRequestsStats(eventIds);
     }
 }

@@ -15,11 +15,11 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     List<Request> findAllByRequesterId(long userId);
 
-    List<Request> findAllByEventIdAndEventInitiatorId(long eventId, long initiatorId);
+    List<Request> findAllByEventId(long eventId);
 
-    List<Request> findAllByEventIdAndEventInitiatorIdAndIdIn(long eventId, long initiatorId, List<Long> ids);
+    List<Request> findAllByEventIdAndIdIn(long eventId, List<Long> ids);
 
-    List<Request> findAllByEventIdAndEventInitiatorIdAndStatus(long eventId, long initiatorId, RequestState status);
+    List<Request> findAllByEventIdAndStatus(long eventId, RequestState status);
 
     @Query("select r.eventId as id, count(r.id) as requests " +
             "from Request r " +

@@ -68,7 +68,7 @@ class RequestServiceImpl implements RequestService {
 
     @Override
     public List<Request> getRequests(final long userId, final long eventId) {
-        return requestRepository.findAllByEventIdAndEventInitiatorId(eventId, userId);
+        return requestRepository.findAllByEventId(eventId);
     }
 
     @Override
@@ -79,7 +79,7 @@ class RequestServiceImpl implements RequestService {
             return Pair.of(List.of(), List.of());
         }
         final List<Request> requests = requestRepository
-                .findAllByEventIdAndEventInitiatorIdAndIdIn(event.id(), userId, dto.requestIds());
+                .findAllByEventIdAndIdIn(event.id(), dto.requestIds());
         requireAllExist(dto.requestIds(), requests);
         requireAllHavePendingStatus(requests);
 
@@ -97,7 +97,7 @@ class RequestServiceImpl implements RequestService {
             confirmedRequests = setStatusAndSaveAll(requests, RequestState.CONFIRMED);
             if (requests.size() == availableSlots) {
                 final List<Request> pendingRequests = requestRepository
-                        .findAllByEventIdAndEventInitiatorIdAndStatus(event.id(), userId, RequestState.PENDING);
+                        .findAllByEventIdAndStatus(event.id(), RequestState.PENDING);
                 rejectedRequests = setStatusAndSaveAll(pendingRequests, RequestState.REJECTED);
             }
         }

@@ -21,17 +21,15 @@ import ru.practicum.ewm.exception.FieldValidationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.exception.ParameterValidationException;
-import ru.practicum.ewm.request.dto.RequestState;
-import ru.practicum.ewm.stats.StatsClient;
-import ru.practicum.ewm.stats.ViewStatsDto;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Validated
@@ -47,7 +45,6 @@ class EventServiceImpl implements EventService {
     EventServiceImpl(
             final Clock clock,
             final CategoryService categoryService,
-            final StatsClient statsClient,
             final EventRepository repository,
             @Value("${ewm.timeout.admin}") final Duration adminTimeout,
             @Value("${ewm.timeout.user}") final Duration userTimeout
@@ -142,6 +139,7 @@ class EventServiceImpl implements EventService {
     public Event update(final long id, final EventPatch patch, final long userId) {
         validateEventDate(patch.eventDate(), userTimeout);
         final Event event = getByIdAndUserId(id, userId);
+        log.debug("Updating event {}", event);
         if (event.getState() == EventState.PUBLISHED) {
             throw new NotPossibleException("Only pending or canceled events can be changed");
         }
