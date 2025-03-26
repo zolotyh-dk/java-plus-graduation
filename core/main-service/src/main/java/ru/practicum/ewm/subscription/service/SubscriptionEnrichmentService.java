@@ -29,7 +29,7 @@ public class SubscriptionEnrichmentService {
         checkUserExists(subscriberId);
         List<Event> events = subscriptionService.getEvents(subscriberId, filter);
         List<UserShortDto> initiators = findUsers(events);
-        return eventMapper.mapToShortDto(events, initiators);
+        return eventMapper.mapToShortDto(events);
     }
 
     public void unsubscribe(long subscriberId, long targetId) {

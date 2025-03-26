@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.service.EventRequestStats;
 
 import java.util.Optional;
 import java.util.Set;

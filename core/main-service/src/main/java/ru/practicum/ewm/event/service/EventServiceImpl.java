@@ -38,9 +38,6 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @Slf4j
 class EventServiceImpl implements EventService {
-    private static final LocalDateTime VIEWS_FROM = LocalDateTime.of(1970, Month.JANUARY, 1, 0, 0, 0);
-    private static final LocalDateTime VIEWS_TO = LocalDateTime.of(2100, Month.DECEMBER, 31, 23, 59, 59);
-
     private final Clock clock;
     private final CategoryService categoryService;
     private final EventRepository repository;
@@ -75,21 +72,18 @@ class EventServiceImpl implements EventService {
     @Override
     public Event getById(final long id) {
         return repository.findById(id)
-                .map(this::fetchConfirmedRequestsAndHits)
                 .orElseThrow(() -> new NotFoundException(Event.class, id));
     }
 
     @Override
     public Event getPublishedById(long id) {
         return repository.findByIdAndState(id, EventState.PUBLISHED)
-                .map(this::fetchConfirmedRequestsAndHits)
                 .orElseThrow(() -> new NotFoundException(Event.class, id));
     }
 
     @Override
     public Event getByIdAndUserId(final long id, final long userId) {
         return repository.findByIdAndInitiatorId(id, userId)
-                .map(this::fetchConfirmedRequestsAndHits)
                 .orElseThrow(() -> new NotFoundException(Event.class, id));
     }
 
@@ -116,7 +110,6 @@ class EventServiceImpl implements EventService {
         final List<Event> events = new ArrayList<>(where.map(w -> repository.findAll(w, page))
                 .orElseGet(() -> repository.findAll(page))
                 .getContent());
-        fetchConfirmedRequestsAndHits(events);
 
         if (Boolean.TRUE.equals(filter.onlyAvailable())) {
             events.removeIf(foundEvent -> foundEvent.getParticipantLimit() > 0L

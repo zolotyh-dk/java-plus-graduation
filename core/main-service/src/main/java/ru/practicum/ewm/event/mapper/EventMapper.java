@@ -92,13 +92,13 @@ public class EventMapper {
                 .build();
     }
 
-    public EventFullDto mapToFullDto(final Event event, UserShortDto initiator) {
-        if (event == null || initiator == null) {
+    public EventFullDto mapToFullDto(final Event event) {
+        if (event == null) {
             return null;
         }
         return EventFullDto.builder()
                 .id(event.getId())
-                .initiator(initiator)
+                .initiator(event.getInitiator())
                 .title(event.getTitle())
                 .category(categoryMapper.mapToDto(event.getCategory()))
                 .eventDate(event.getEventDate())
@@ -116,24 +116,22 @@ public class EventMapper {
                 .build();
     }
 
-    public List<EventFullDto> mapToFullDto(final List<Event> events, final List<UserShortDto> initiators) {
-        if (events == null || initiators == null) {
+    public List<EventFullDto> mapToFullDto(final List<Event> events) {
+        if (events == null) {
             return null;
         }
-        Map<Long, UserShortDto> initiatorMap = initiators.stream()
-                .collect(Collectors.toMap(UserShortDto::id, Function.identity()));
         return events.stream()
-                .map(event -> mapToFullDto(event, initiatorMap.get(event.getInitiatorId())))
+                .map(this::mapToFullDto)
                 .toList();
     }
 
-    public EventShortDto mapToShortDto(final Event event, final UserShortDto initiator) {
-        if (event == null || initiator == null) {
+    public EventShortDto mapToShortDto(final Event event) {
+        if (event == null) {
             return null;
         }
         return EventShortDto.builder()
                 .id(event.getId())
-                .initiator(initiator)
+                .initiator(event.getInitiator())
                 .title(event.getTitle())
                 .category(categoryMapper.mapToDto(event.getCategory()))
                 .eventDate(event.getEventDate())
@@ -144,14 +142,12 @@ public class EventMapper {
                 .build();
     }
 
-    public List<EventShortDto> mapToShortDto(final List<Event> events, final List<UserShortDto> initiators) {
-        if (events == null || initiators == null) {
+    public List<EventShortDto> mapToShortDto(final List<Event> events) {
+        if (events == null) {
             return null;
         }
-        Map<Long, UserShortDto> initiatorMap = initiators.stream()
-                .collect(Collectors.toMap(UserShortDto::id, Function.identity()));
         return events.stream()
-                .map(event -> mapToShortDto(event, initiatorMap.get(event.getInitiatorId())))
+                .map(this::mapToShortDto)
                 .toList();
     }
 

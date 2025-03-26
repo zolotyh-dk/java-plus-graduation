@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.dto.Location;
+import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +25,9 @@ public class Event {
     private Long id;
 
     private long initiatorId;
+
+    @Transient
+    private UserShortDto initiator;
 
     @NotBlank
     @Size(min = 3, max = 120)

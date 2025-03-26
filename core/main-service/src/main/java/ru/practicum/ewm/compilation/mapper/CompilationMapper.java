@@ -37,8 +37,7 @@ public class CompilationMapper {
                 .id(compilation.getId())
                 .events(compilation.getEvents() == null ? null :
                         compilation.getEvents().stream()
-                                .map(event -> //TODO: запрашивать юзера через клиент
-                                        eventMapper.mapToShortDto(event, new UserShortDto(1, "name")))
+                                .map(eventMapper::mapToShortDto)
                                 .collect(Collectors.toSet()))
                 .pinned(compilation.getPinned())
                 .title(compilation.getTitle())
