@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/internal/requests")
 @RequiredArgsConstructor
-public class InternalRequestController extends HttpRequestResponseLogger {
+public class RequestInternalController extends HttpRequestResponseLogger {
     private final RequestService service;
 
     @PostMapping("/stats")

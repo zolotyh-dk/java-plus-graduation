@@ -24,5 +24,5 @@ public interface EventService {
 
     Event update(long id, @NotNull @Valid EventPatch patch, long userId);
 
-    boolean existsByIdAndUserId(long userId, long eventId);
+    boolean existsById(long eventId);
 }

@@ -10,6 +10,7 @@ spring:
 logging.level:
   org.springframework.orm.jpa: INFO
   org.springframework.transaction: INFO
+  ru.practicum.ewm: DEBUG
 
 server:
   port: 0

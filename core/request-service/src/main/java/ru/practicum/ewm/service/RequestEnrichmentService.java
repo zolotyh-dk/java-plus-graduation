@@ -25,7 +25,7 @@ public class RequestEnrichmentService {
 
     public RequestDto create(long userId, long eventId) {
         checkUserExists(userId);
-        EventFullDto event = getEvent(userId, eventId);
+        EventFullDto event = getEvent(eventId);
         return requestMapper.mapToRequestDto(requestService.create(userId, event));
     }
 
@@ -46,7 +46,7 @@ public class RequestEnrichmentService {
     }
 
     public EventRequestStatusDto processRequests(long eventId, UpdateEventRequestStatusDto updateDto, long userId) {
-        EventFullDto event = getEvent(userId, eventId);
+        EventFullDto event = getEvent(eventId);
         Pair<List<Request>, List<Request>> processedRequests = requestService.processRequests(event, updateDto, userId);
         return new EventRequestStatusDto(requestMapper.mapToRequestDto(processedRequests.getFirst()),
                 requestMapper.mapToRequestDto(processedRequests.getSecond()));
@@ -64,7 +64,7 @@ public class RequestEnrichmentService {
         }
     }
 
-    private EventFullDto getEvent(long userId, long eventId) {
-        return eventClient.get(userId, eventId);
+    private EventFullDto getEvent(long eventId) {
+        return eventClient.getById(eventId);
     }
 }

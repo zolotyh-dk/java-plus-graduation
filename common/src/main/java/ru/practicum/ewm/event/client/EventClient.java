@@ -7,8 +7,8 @@ import ru.practicum.ewm.event.dto.EventFullDto;
 
 @FeignClient(name = "main-service")
 public interface EventClient {
-    @GetMapping("/users/{userId}/events/{eventId}")
-    EventFullDto get(@PathVariable long userId, @PathVariable long eventId);
+    @GetMapping("internal/events/{eventId}")
+    EventFullDto getById(@PathVariable long eventId);
 
     @GetMapping("/users/{userId}/events/exists/{eventId}")
     boolean existsById(@PathVariable long userId, @PathVariable long eventId);

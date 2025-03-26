@@ -1,6 +1,7 @@
 package ru.practicum.ewm.event.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventEnrichmentService {
@@ -90,8 +92,8 @@ public class EventEnrichmentService {
         return eventMapper.mapToFullDto(event);
     }
 
-    public boolean existsByIdAndUserId(long userId, long eventId) {
-        return eventService.existsByIdAndUserId(userId, eventId);
+    public boolean existsById(long eventId) {
+        return eventService.existsById(eventId);
     }
 
     private void checkUserExists(long userId) {
@@ -102,10 +104,12 @@ public class EventEnrichmentService {
 
     private void fetchUsers(List<Event> events) {
         List<Long> userIds = events.stream().map(Event::getInitiatorId).toList();
+        log.debug("Fetching users from {}", userIds);
         List<UserShortDto> initiators = userClient.findAllByIdIn(userIds);
         Map<Long, UserShortDto> initiatorsMap = initiators.stream()
                 .collect(Collectors.toMap(UserShortDto::id, Function.identity()));
-        events.forEach(event -> event.setInitiator(initiatorsMap.get(event.getId())));
+        log.debug("Fetching users <id, user> {}", initiatorsMap);
+        events.forEach(event -> event.setInitiator(initiatorsMap.get(event.getInitiatorId())));
     }
 
     private void fetchUser(Event event) {

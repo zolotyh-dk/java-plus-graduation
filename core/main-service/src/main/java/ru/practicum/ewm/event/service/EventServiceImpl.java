@@ -148,8 +148,8 @@ class EventServiceImpl implements EventService {
     }
 
     @Override
-    public boolean existsByIdAndUserId(long userId, long eventId) {
-        return repository.existsByIdAndInitiatorId(userId, eventId);
+    public boolean existsById(long eventId) {
+        return repository.existsById(eventId);
     }
 
     private void validateEventDate(final LocalDateTime eventDate, final Duration timeLimit) {
