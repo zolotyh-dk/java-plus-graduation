@@ -58,6 +58,14 @@ public class EventEnrichmentService {
         return eventMapper.mapToFullDto(event);
     }
 
+    public EventFullDto getById(long id) {
+        Event event = eventService.getById(id);
+        fetchUser(event);
+        fetchConfirmedRequests(event);
+        fetchViews(event);
+        return eventMapper.mapToFullDto(event);
+    }
+
     public List<EventFullDto> getFullEvents(EventFilter filter) {
         List<Event> events = eventService.get(filter);
         fetchUsers(events);

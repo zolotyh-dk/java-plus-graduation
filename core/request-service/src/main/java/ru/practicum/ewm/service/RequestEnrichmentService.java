@@ -41,7 +41,7 @@ public class RequestEnrichmentService {
     }
 
     public List<RequestDto> getRequests(long userId, long eventId) {
-        checkEventExists(userId, eventId);
+        checkEventExists(eventId);
         return requestMapper.mapToRequestDto(requestService.getRequests(userId, eventId));
     }
 
@@ -58,8 +58,8 @@ public class RequestEnrichmentService {
         }
     }
 
-    private void checkEventExists(long userId, long eventId) {
-        if (!eventClient.existsById(userId, eventId)) {
+    private void checkEventExists(long eventId) {
+        if (!eventClient.existsById(eventId)) {
             throw new NotFoundException("Event", eventId);
         }
     }

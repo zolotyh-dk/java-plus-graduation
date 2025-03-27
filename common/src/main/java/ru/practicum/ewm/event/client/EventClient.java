@@ -10,6 +10,6 @@ public interface EventClient {
     @GetMapping("internal/events/{eventId}")
     EventFullDto getById(@PathVariable long eventId);
 
-    @GetMapping("/users/{userId}/events/exists/{eventId}")
-    boolean existsById(@PathVariable long userId, @PathVariable long eventId);
+    @GetMapping("/internal/events/{eventId}/exists")
+    boolean existsById(@PathVariable long eventId);
 }

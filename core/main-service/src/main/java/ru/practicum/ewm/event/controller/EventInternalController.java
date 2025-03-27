@@ -8,20 +8,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.common.HttpRequestResponseLogger;
 import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.event.service.EventEnrichmentService;
 
 @RestController
 @RequestMapping("/internal/events/{eventId}")
 @RequiredArgsConstructor
 class EventInternalController extends HttpRequestResponseLogger {
-    private final EventService eventService;
-    private final EventMapper eventMapper;
+    private final EventEnrichmentService eventService;
 
     @GetMapping()
     EventFullDto getById(@PathVariable("eventId") Long eventId, final HttpServletRequest httpRequest) {
         logHttpRequest(httpRequest);
-        EventFullDto dto = eventMapper.mapToFullDto(eventService.getById(eventId));
+        EventFullDto dto = eventService.getById(eventId);
         logHttpResponse(httpRequest, dto);
         return dto;
     }
