@@ -3,18 +3,12 @@ package ru.practicum.ewm.event.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.category.CategoryMapper;
-import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.dto.EventState;
-import ru.practicum.ewm.event.dto.Location;
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.user.dto.UserShortDto;
+import ru.practicum.ewm.event.model.Event;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor

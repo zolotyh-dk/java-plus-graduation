@@ -140,8 +140,8 @@ public class EventEnrichmentService {
         List<String> uris = ids.stream().map(id -> "/events/" + id).toList();
         Map<String, Long> views = statsClient.getStats(VIEWS_FROM, VIEWS_TO, uris, true).stream()
                 .collect(Collectors.toMap(ViewStatsDto::uri, ViewStatsDto::hits));
-        events.forEach(event -> event.
-                setViews(views.getOrDefault("/events/" + event.getId(), 0L)));
+        events.forEach(event -> event
+                .setViews(views.getOrDefault("/events/" + event.getId(), 0L)));
     }
 
     private void fetchViews(Event event) {
