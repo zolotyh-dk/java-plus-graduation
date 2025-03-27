@@ -50,7 +50,7 @@ services:
 
   stats-server:
     build: stats/stats-service
-    container_name: ewm-stats-server
+    container_name: stats-server
     ports:
       - "9090:9090"
     depends_on:
@@ -74,7 +74,7 @@ services:
 
   stats-db:
     image: postgres:16.1
-    container_name: postgres-ewm-stats-db
+    container_name: stats-db
     environment:
       - POSTGRES_PASSWORD=root
       - POSTGRES_USER=root
@@ -91,7 +91,7 @@ services:
 
   ewm-service:
     build: core/main-service
-    container_name: ewm-main-service
+    container_name: ewm-service
     depends_on:
       ewm-db:
         condition: service_healthy
@@ -106,16 +106,16 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-      - SERVER_PORT=8081
+      - SERVER_PORT=8080
     healthcheck:
-      test: "curl --fail --silent localhost:8081/actuator/health | grep UP || exit 1"
+      test: "curl --fail --silent localhost:8080/actuator/health | grep UP || exit 1"
       timeout: 5s
       interval: 25s
       retries: 10
 
   ewm-db:
     image: postgres:16.1
-    container_name: postgres-ewm-main-db
+    container_name: ewm-db
     networks:
       - ewm-net
     environment:
@@ -145,16 +145,16 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-      - SERVER_PORT=8181
+      - SERVER_PORT=8080
     healthcheck:
-      test: "curl --fail --silent localhost:8181/actuator/health | grep UP || exit 1"
+      test: "curl --fail --silent localhost:8080/actuator/health | grep UP || exit 1"
       timeout: 5s
       interval: 25s
       retries: 10
 
   users-db:
     image: postgres:16.1
-    container_name: postgres-ewm-users-db
+    container_name: users-db
     environment:
       - POSTGRES_DB=users
       - POSTGRES_USER=root
@@ -184,7 +184,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-      - SERVER_PORT=8282
+      - SERVER_PORT=8080
     healthcheck:
       test: "curl --fail --silent localhost:8282/actuator/health | grep UP || exit 1"
       timeout: 5s
@@ -193,9 +193,9 @@ services:
 
   request-db:
     image: postgres:16.1
-    container_name: postgres-ewm-request-db
+    container_name: request-db
     environment:
-      - POSTGRES_DB=users
+      - POSTGRES_DB=requests
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
     networks:

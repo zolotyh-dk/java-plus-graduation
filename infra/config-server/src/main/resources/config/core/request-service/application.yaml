@@ -14,10 +14,6 @@ logging.level:
 server:
   port: 0
 
-ewm:
-  timeout:
-    admin: PT1H
-    user: PT2H
 ---
 
 spring:
@@ -26,7 +22,7 @@ spring:
       on-profile: default
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/requests
+    url: jdbc:postgresql://request-db:5432/requests
     username: root
     password: root
 
