@@ -5,14 +5,18 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: user-service_route
+        - id: user-service-route
           uri: lb://user-service
           predicates:
             - Path=/admin/users/**
-        - id: request-service_route
+        - id: request-service-route
           uri: lb://request-service
           predicates:
             - Path=/users/*/requests/**, /users/*/events/*/requests/**
+        - id: subscription-service-route
+          uri: lb://subscription-service
+          predicates:
+            - Path=/users/*/subscriptions/**
         - id: main-service-route
           uri: lb://main-service
           predicates:

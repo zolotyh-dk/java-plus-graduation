@@ -1,14 +1,12 @@
-package ru.practicum.ewm.subscription.service;
+package ru.practicum.ewm.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.event.client.EventClient;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.client.UserClient;
-import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.util.List;
 
@@ -17,7 +15,7 @@ import java.util.List;
 public class SubscriptionEnrichmentService {
     private final SubscriptionService subscriptionService;
     private final UserClient userClient;
-    private final EventMapper eventMapper;
+    private final EventClient eventClient;
 
     public void subscribe(long subscriberId, long targetId) {
         checkUserExists(subscriberId);
@@ -27,9 +25,9 @@ public class SubscriptionEnrichmentService {
 
     public List<EventShortDto> getEvents(long subscriberId, EventFilter filter) {
         checkUserExists(subscriberId);
-        List<Event> events = subscriptionService.getEvents(subscriberId, filter);
-        List<UserShortDto> initiators = findUsers(events);
-        return eventMapper.mapToShortDto(events);
+        List<Long> initiatorIds = subscriptionService.findTargetIdsBySubscriberId(subscriberId);
+        final EventFilter filterWithInitiators = filter.toBuilder().users(initiatorIds).build();
+        return eventClient.get(filterWithInitiators);
     }
 
     public void unsubscribe(long subscriberId, long targetId) {
@@ -42,10 +40,5 @@ public class SubscriptionEnrichmentService {
         if (!userClient.existsById(userId)) {
             throw new NotFoundException("User", userId);
         }
-    }
-
-    private List<UserShortDto> findUsers(List<Event> events) {
-        List<Long> userIds = events.stream().map(Event::getInitiatorId).toList();
-        return userClient.findAllByIdIn(userIds);
     }
 }

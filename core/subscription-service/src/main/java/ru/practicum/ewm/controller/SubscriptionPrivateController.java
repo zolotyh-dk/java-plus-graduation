@@ -1,4 +1,4 @@
-package ru.practicum.ewm.subscription.controller;
+package ru.practicum.ewm.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;
@@ -12,7 +12,7 @@ import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.EventSort;
 import ru.practicum.ewm.event.dto.EventState;
-import ru.practicum.ewm.subscription.service.SubscriptionEnrichmentService;
+import ru.practicum.ewm.service.SubscriptionEnrichmentService;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,9 +1,9 @@
-package ru.practicum.ewm.subscription.repository;
+package ru.practicum.ewm.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ru.practicum.ewm.subscription.model.Subscription;
+import ru.practicum.ewm.model.Subscription;
 
 import java.util.List;
 import java.util.Optional;

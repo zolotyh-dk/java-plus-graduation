@@ -208,6 +208,45 @@ services:
       interval: 10s
       retries: 10
 
+  subscription-service:
+    build: core/subscription-service
+    container_name: subscription-service
+    depends_on:
+      subscription-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - ewm-net
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://request-db:5432/subscriptions
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SERVER_PORT=8080
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health | grep UP || exit 1"
+      timeout: 5s
+      interval: 25s
+      retries: 10
+
+  subscription-db:
+    image: postgres:16.1
+    container_name: subscription-db
+    environment:
+      - POSTGRES_DB=subscriptions
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+    networks:
+      - ewm-net
+    volumes:
+      - subscription_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 10s
+      retries: 10
+
 networks:
   ewm-net:
 
@@ -216,3 +255,4 @@ volumes:
   ewm_data:
   users_data:
   request_data:
+  subscription_data:
