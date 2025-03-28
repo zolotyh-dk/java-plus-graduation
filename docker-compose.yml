@@ -37,7 +37,7 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
-      ewm-service:
+      event-service:
         condition: service_healthy
       user-service:
         condition: service_healthy
@@ -89,20 +89,18 @@ services:
       interval: 10s
       retries: 15
 
-  ewm-service:
-    build: core/main-service
-    container_name: ewm-service
+  event-service:
+    build: core/event-service
+    container_name: event-service
     depends_on:
-      ewm-db:
+      event-db:
         condition: service_healthy
       config-server:
-        condition: service_healthy
-      stats-server:
         condition: service_healthy
     networks:
       - ewm-net
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/events
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://event-db:5432/events
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
@@ -113,9 +111,9 @@ services:
       interval: 25s
       retries: 10
 
-  ewm-db:
+  event-db:
     image: postgres:16.1
-    container_name: ewm-db
+    container_name: event-db
     networks:
       - ewm-net
     environment:
@@ -123,7 +121,7 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
     volumes:
-      - ewm_data:/var/lib/postgresql/data
+      - event_data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -162,7 +160,7 @@ services:
     networks:
       - ewm-net
     volumes:
-      - users_data:/var/lib/postgresql/data
+      - user_data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -219,7 +217,7 @@ services:
     networks:
       - ewm-net
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://request-db:5432/subscriptions
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://subscription-db:5432/subscriptions
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
@@ -252,7 +250,7 @@ networks:
 
 volumes:
   stats_data:
-  ewm_data:
-  users_data:
+  event_data:
+  user_data:
   request_data:
   subscription_data:

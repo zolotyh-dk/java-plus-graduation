@@ -17,10 +17,10 @@ spring:
           uri: lb://subscription-service
           predicates:
             - Path=/users/*/subscriptions/**
-        - id: main-service-route
-          uri: lb://main-service
+        - id: event-service-route
+          uri: lb://event-service
           predicates:
-            - Path=/**
+            - Path=/admin/events/**, /users/*/events/**, /events/**, /admin/compilations/**, /compilations/**, /categories/**, /admin/categories/**
 
 server:
   port: 8080

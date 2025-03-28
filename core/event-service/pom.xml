@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>explore-with-me-main</artifactId>
+    <artifactId>event-service</artifactId>
 
     <properties>
         <argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>

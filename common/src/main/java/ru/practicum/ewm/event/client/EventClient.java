@@ -11,7 +11,7 @@ import ru.practicum.ewm.event.dto.EventShortDto;
 
 import java.util.List;
 
-@FeignClient(name = "main-service")
+@FeignClient(name = "event-service")
 public interface EventClient {
     @GetMapping("internal/events/{eventId}")
     EventFullDto getById(@PathVariable long eventId);

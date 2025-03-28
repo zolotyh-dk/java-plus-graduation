@@ -9,10 +9,10 @@ import java.time.Clock;
 
 @SpringBootApplication
 @EnableFeignClients
-public class MainService {
+public class EventServiceApp {
 
     public static void main(String[] args) {
-        SpringApplication.run(MainService.class, args);
+        SpringApplication.run(EventServiceApp.class, args);
     }
 
     @Bean
