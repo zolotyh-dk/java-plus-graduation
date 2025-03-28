@@ -3,7 +3,7 @@ package ru.practicum.ewm.event.service;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import ru.practicum.ewm.event.dto.EventFilter;
-import ru.practicum.ewm.event.dto.EventPatch;
+import ru.practicum.ewm.event.model.EventPatch;
 import ru.practicum.ewm.event.model.Event;
 
 import java.util.List;

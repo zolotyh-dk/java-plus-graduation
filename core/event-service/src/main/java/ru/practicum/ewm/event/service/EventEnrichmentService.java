@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.EventPatch;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.client.RequestClient;
 import ru.practicum.ewm.stats.StatsClient;
@@ -116,7 +117,7 @@ public class EventEnrichmentService {
         List<UserShortDto> initiators = userClient.findAllByIdIn(userIds);
         Map<Long, UserShortDto> initiatorsMap = initiators.stream()
                 .collect(Collectors.toMap(UserShortDto::id, Function.identity()));
-        log.debug("Fetching users <id, user> {}", initiatorsMap);
+        log.debug("Fetching users {}", initiatorsMap);
         events.forEach(event -> event.setInitiator(initiatorsMap.get(event.getInitiatorId())));
     }
 

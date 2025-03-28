@@ -3,9 +3,9 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.dto.EventRequestStatusDto;
-import ru.practicum.ewm.dto.RequestDto;
-import ru.practicum.ewm.dto.UpdateEventRequestStatusDto;
+import ru.practicum.ewm.request.dto.EventRequestStatusDto;
+import ru.practicum.ewm.request.dto.RequestDto;
+import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.event.client.EventClient;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -47,9 +47,10 @@ public class RequestEnrichmentService {
 
     public EventRequestStatusDto processRequests(long eventId, UpdateEventRequestStatusDto updateDto, long userId) {
         EventFullDto event = getEvent(eventId);
-        Pair<List<Request>, List<Request>> processedRequests = requestService.processRequests(event, updateDto, userId);
-        return new EventRequestStatusDto(requestMapper.mapToRequestDto(processedRequests.getFirst()),
-                requestMapper.mapToRequestDto(processedRequests.getSecond()));
+        Pair<List<Request>, List<Request>> confirmedAndRejectedRequests =
+                requestService.processRequests(event, updateDto, userId);
+        return new EventRequestStatusDto(requestMapper.mapToRequestDto(confirmedAndRejectedRequests.getFirst()),
+                requestMapper.mapToRequestDto(confirmedAndRejectedRequests.getSecond()));
     }
 
     private void checkUserExists(long userId) {

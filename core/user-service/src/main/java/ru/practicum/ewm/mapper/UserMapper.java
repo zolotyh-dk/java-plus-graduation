@@ -1,10 +1,10 @@
 package ru.practicum.ewm.mapper;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.dto.NewUserRequest;
-import ru.practicum.ewm.dto.UserDto;
+import ru.practicum.ewm.user.dto.NewUserRequest;
+import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
-import ru.practicum.ewm.entity.User;
+import ru.practicum.ewm.model.User;
 
 import java.util.List;
 
@@ -49,13 +49,22 @@ public class UserMapper {
                 .toList();
     }
 
-    public UserShortDto mapToShortDto(final User user) {
-        if (user == null) {
+    public UserShortDto mapToShortDto(final UserDto userDto) {
+        if (userDto == null) {
             return null;
         }
         return UserShortDto.builder()
-                .id(user.getId())
-                .name(user.getName())
+                .id(userDto.id())
+                .name(userDto.name())
                 .build();
+    }
+
+    public List<UserShortDto> mapToShortDto(List<UserDto> users) {
+        if (users == null) {
+            return null;
+        }
+        return users.stream()
+                .map(this::mapToShortDto)
+                .toList();
     }
 }

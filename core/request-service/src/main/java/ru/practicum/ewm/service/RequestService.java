@@ -3,7 +3,7 @@ package ru.practicum.ewm.service;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.util.Pair;
-import ru.practicum.ewm.dto.UpdateEventRequestStatusDto;
+import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.model.Request;
 

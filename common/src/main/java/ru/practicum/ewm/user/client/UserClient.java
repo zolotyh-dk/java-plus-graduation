@@ -10,9 +10,9 @@ import java.util.List;
 
 @FeignClient(name = "user-service")
 public interface UserClient {
-    @GetMapping("/admin/users/exists/{id}")
+    @GetMapping("/internal/users/exists/{id}")
     boolean existsById(@PathVariable long id);
 
-    @GetMapping("/admin/users")
+    @GetMapping("/internal/users")
     List<UserShortDto> findAllByIdIn(@RequestParam List<Long> ids);
 }

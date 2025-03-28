@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
 import ru.practicum.ewm.service.RequestService;
 
 import java.util.List;

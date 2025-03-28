@@ -5,11 +5,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
-import ru.practicum.ewm.compilation.dto.CompilationDto;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
+import ru.practicum.ewm.category.dto.CompilationDto;
 import ru.practicum.ewm.compilation.service.CompilationService;
-import ru.practicum.ewm.compilation.dto.NewCompilationDto;
-import ru.practicum.ewm.compilation.dto.UpdateCompilationRequest;
+import ru.practicum.ewm.category.dto.NewCompilationDto;
+import ru.practicum.ewm.category.dto.UpdateCompilationRequest;
 
 @RestController
 @RequestMapping("admin/compilations")

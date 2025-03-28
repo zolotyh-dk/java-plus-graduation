@@ -6,7 +6,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import ru.practicum.ewm.dto.UpdateEventRequestStatusDto;
+import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -38,7 +38,7 @@ class RequestServiceImpl implements RequestService {
         if (!event.state().equals(EventState.PUBLISHED))
             throw new NotPossibleException("Event is not published");
         if (event.participantLimit() != 0 && event.confirmedRequests() >= event.participantLimit())
-                throw new NotPossibleException("Request limit exceeded");
+            throw new NotPossibleException("Request limit exceeded");
         Request newRequest = new Request();
         newRequest.setRequesterId(userId);
         newRequest.setEventId(event.id());
@@ -73,8 +73,9 @@ class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
-    public Pair<List<Request>, List<Request>> processRequests(final EventFullDto event, final UpdateEventRequestStatusDto dto,
-                                final long userId) {
+    public Pair<List<Request>, List<Request>> processRequests(final EventFullDto event,
+                                                              final UpdateEventRequestStatusDto dto,
+                                                              final long userId) {
         if (CollectionUtils.isEmpty(dto.requestIds())) {
             return Pair.of(List.of(), List.of());
         }
@@ -101,7 +102,7 @@ class RequestServiceImpl implements RequestService {
                 rejectedRequests = setStatusAndSaveAll(pendingRequests, RequestState.REJECTED);
             }
         }
-        return Pair.of(confirmedRequests,rejectedRequests);
+        return Pair.of(confirmedRequests, rejectedRequests);
     }
 
     @Override

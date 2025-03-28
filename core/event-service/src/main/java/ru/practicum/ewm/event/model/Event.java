@@ -7,7 +7,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import ru.practicum.ewm.category.Category;
+import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.dto.Location;
 import ru.practicum.ewm.user.dto.UserShortDto;

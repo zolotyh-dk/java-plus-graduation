@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
-import ru.practicum.ewm.dto.RequestDto;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
+import ru.practicum.ewm.request.dto.RequestDto;
 import ru.practicum.ewm.service.RequestEnrichmentService;
 
 import java.util.Collection;

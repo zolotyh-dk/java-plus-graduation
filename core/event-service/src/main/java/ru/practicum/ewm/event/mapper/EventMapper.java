@@ -2,9 +2,10 @@ package ru.practicum.ewm.event.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.category.CategoryMapper;
+import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.EventPatch;
 
 import java.time.Clock;
 import java.time.LocalDateTime;

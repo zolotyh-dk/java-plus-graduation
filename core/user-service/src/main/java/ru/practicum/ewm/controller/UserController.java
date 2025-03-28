@@ -10,9 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
-import ru.practicum.ewm.dto.NewUserRequest;
-import ru.practicum.ewm.dto.UserDto;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
+import ru.practicum.ewm.user.dto.NewUserRequest;
+import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.service.UserService;
 
 import java.util.Collection;
@@ -58,13 +58,5 @@ public class UserController extends HttpRequestResponseLogger {
         logHttpRequest(request);
         userService.delete(id);
         logHttpResponse(request);
-    }
-
-    @GetMapping("/exists/{id}")
-    public boolean exists(@PathVariable final long id, final HttpServletRequest request) {
-        logHttpRequest(request);
-        boolean isExists = userService.existsById(id);
-        logHttpResponse(request, isExists);
-        return isExists;
     }
 }

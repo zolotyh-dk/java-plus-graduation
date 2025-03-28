@@ -5,10 +5,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
-import ru.practicum.ewm.dto.EventRequestStatusDto;
-import ru.practicum.ewm.dto.RequestDto;
-import ru.practicum.ewm.dto.UpdateEventRequestStatusDto;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
+import ru.practicum.ewm.request.dto.EventRequestStatusDto;
+import ru.practicum.ewm.request.dto.RequestDto;
+import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.service.RequestEnrichmentService;
 
 import java.util.List;

@@ -6,8 +6,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
-import ru.practicum.ewm.compilation.dto.CompilationDto;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
+import ru.practicum.ewm.category.dto.CompilationDto;
 import ru.practicum.ewm.compilation.service.CompilationService;
 
 import java.util.List;
