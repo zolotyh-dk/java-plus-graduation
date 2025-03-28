@@ -6,6 +6,7 @@ import ru.practicum.ewm.event.client.EventClient;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ParameterValidationException;
 import ru.practicum.ewm.user.client.UserClient;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public class SubscriptionEnrichmentService {
         checkUserExists(subscriberId);
         List<Long> initiatorIds = subscriptionService.findTargetIdsBySubscriberId(subscriberId);
         final EventFilter filterWithInitiators = filter.toBuilder().users(initiatorIds).build();
+        if (filter.rangeStart() != null && filter.rangeEnd() != null && filter.rangeEnd().isBefore(filter.rangeStart())) {
+            throw new ParameterValidationException("rangeEnd",
+                    "must be after or equal to 'rangeStart'",
+                    filter.rangeEnd());
+        }
         return eventClient.get(filterWithInitiators);
     }
 
