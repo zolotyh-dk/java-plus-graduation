@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.service.CategoryService;
-import ru.practicum.ewm.category.mapper.CategoryMapperImpl;
 import ru.practicum.ewm.exception.HttpRequestResponseLogger;
 import ru.practicum.ewm.category.dto.CategoryDto;
 
@@ -20,9 +20,8 @@ import java.util.List;
 @RequestMapping("/categories")
 @RequiredArgsConstructor
 class CategoryController extends HttpRequestResponseLogger {
-
     private final CategoryService categories;
-    private final CategoryMapperImpl mapper;
+    private final CategoryMapper mapper;
 
     @GetMapping
     List<CategoryDto> get(

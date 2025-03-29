@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.category.dto.CategoryCreateDto;
 import ru.practicum.ewm.category.dto.CategoryPatch;
+import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.service.CategoryService;
 import ru.practicum.ewm.category.dto.CategoryUpdateDto;
-import ru.practicum.ewm.category.mapper.CategoryMapperImpl;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.exception.HttpRequestResponseLogger;
 import ru.practicum.ewm.category.dto.CategoryDto;
@@ -25,9 +25,8 @@ import ru.practicum.ewm.category.dto.CategoryDto;
 @RequestMapping("/admin/categories")
 @RequiredArgsConstructor
 class CategoryAdminController extends HttpRequestResponseLogger {
-
     private final CategoryService categories;
-    private final CategoryMapperImpl mapper;
+    private final CategoryMapper mapper;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
