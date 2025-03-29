@@ -20,7 +20,7 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final UserMapper mapper = UserMapper.INSTANCE;
+    private final UserMapper mapper;
 
     @Override
     public User getById(final long id) {

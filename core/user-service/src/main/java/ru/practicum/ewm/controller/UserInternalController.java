@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserInternalController extends HttpRequestResponseLogger {
     private final UserService userService;
-    private final UserMapper userMapper = UserMapper.INSTANCE;
+    private final UserMapper userMapper;
 
     @GetMapping("/exists/{id}")
     public boolean exists(@PathVariable final long id, final HttpServletRequest request) {
