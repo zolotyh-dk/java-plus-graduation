@@ -5,11 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.mapper.UserMapper;
 import ru.practicum.ewm.user.dto.NewUserRequest;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.mapper.UserMapper;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final UserMapper mapper;
+    private final UserMapper mapper = UserMapper.INSTANCE;
 
     @Override
     public User getById(final long id) {
