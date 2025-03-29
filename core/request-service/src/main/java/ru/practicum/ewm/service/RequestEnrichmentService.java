@@ -3,13 +3,13 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.request.dto.EventRequestStatusDto;
 import ru.practicum.ewm.request.dto.RequestDto;
 import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.event.client.EventClient;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.model.Request;
 import ru.practicum.ewm.user.client.UserClient;
 
