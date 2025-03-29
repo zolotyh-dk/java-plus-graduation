@@ -30,5 +30,5 @@ public class Request {
 
     @Enumerated(EnumType.STRING)
     @NotNull
-    RequestState status;
+    private RequestState status;
 }
