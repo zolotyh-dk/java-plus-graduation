@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.ewm.common.HttpRequestResponseLogger;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
 
 import java.time.LocalDateTime;
 import java.util.List;
