@@ -12,7 +12,6 @@
     <artifactId>explore-with-me-stats</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>stats-client</module>
         <module>collector</module>
         <module>serialization</module>
     </modules>
