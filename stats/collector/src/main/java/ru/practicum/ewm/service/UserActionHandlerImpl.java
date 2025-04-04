@@ -8,6 +8,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.config.KafkaTopicProperties;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 import ru.practicum.ewm.stats.message.UserActionProto;
@@ -19,27 +20,15 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class UserActionHandlerImpl implements UserActionHandler {
     private final KafkaProducer<String, SpecificRecordBase> producer;
+    private final KafkaTopicProperties kafkaTopicProperties;
 
-    @Value("${kafka.topic.actions}")
-    private String topic;
-
+    //Маппинг → Построение сообщения → Логирование → Отправка в Kafka → Обработка ответа
     @Override
     public void handle(UserActionProto userActionProto) {
         UserActionAvro userActionAvro = mapToAvro(userActionProto);
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                topic,
-                null,
-                userActionAvro.getTimestamp().toEpochMilli(),
-                String.valueOf(userActionAvro.getEventId()),
-                userActionAvro);
+        ProducerRecord<String, SpecificRecordBase> record = buildProducerRecord(userActionAvro);
         logProducerRecord(record);
-        producer.send(record, (metadata, exception) -> {
-            if (exception != null) {
-                log.error("Error sending message to Kafka: {}", exception.getMessage(), exception);
-            } else {
-                logMessageSent(record, metadata);
-            }
-        });
+        producer.send(record, this::handleCallback);
     }
 
     private UserActionAvro mapToAvro(UserActionProto userActionProto) {
@@ -61,6 +50,16 @@ public class UserActionHandlerImpl implements UserActionHandler {
         return avro;
     }
 
+    private ProducerRecord<String, SpecificRecordBase> buildProducerRecord(UserActionAvro userActionAvro) {
+        return new ProducerRecord<>(
+                kafkaTopicProperties.getActions(),
+                null,
+                userActionAvro.getTimestamp().toEpochMilli(),
+                null,
+                userActionAvro
+        );
+    }
+
     private void logProducerRecord(ProducerRecord<String, SpecificRecordBase> producerRecord) {
         log.info("Send ProducerRecord: topic={}, key={}, partition={}, timestamp={}",
                 producerRecord.topic(),
@@ -70,8 +69,11 @@ public class UserActionHandlerImpl implements UserActionHandler {
         log.debug("ProducerRecord: {}", producerRecord);
     }
 
-    private void logMessageSent(ProducerRecord<String, SpecificRecordBase> producerRecord, RecordMetadata metadata) {
-        log.info("Message sent to Kafka: topic={}, offset={}", metadata.topic(), metadata.offset());
-        log.debug("ProducerRecord: {}", producerRecord);
+    private void handleCallback(RecordMetadata metadata, Exception exception) {
+        if (exception != null) {
+            log.error("Error sending message to Kafka: {}", exception.getMessage(), exception);
+        } else {
+            log.info("Message sent to Kafka: topic={}, offset={}", metadata.topic(), metadata.offset());
+        }
     }
 }
