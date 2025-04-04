@@ -6,9 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "kafka.topic")
+@ConfigurationProperties(prefix = "kafka")
 @Getter
 @Setter
-public class KafkaTopicProperties {
-    private String actions;
+public class KafkaProperties {
+    private String bootstrapServer;
+    private String topic;
 }

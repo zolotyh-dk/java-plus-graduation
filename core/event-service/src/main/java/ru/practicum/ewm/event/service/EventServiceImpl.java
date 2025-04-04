@@ -1,7 +1,9 @@
 package ru.practicum.ewm.event.service;
 
+import com.google.protobuf.Timestamp;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,9 +23,13 @@ import ru.practicum.ewm.exception.FieldValidationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.exception.ParameterValidationException;
+import ru.practicum.ewm.stats.message.ActionTypeProto;
+import ru.practicum.ewm.stats.message.UserActionProto;
+import ru.practicum.ewm.stats.service.UserActionControllerGrpc;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -41,19 +47,22 @@ class EventServiceImpl implements EventService {
     private final EventRepository repository;
     private final Duration adminTimeout;
     private final Duration userTimeout;
+    private final UserActionControllerGrpc.UserActionControllerBlockingStub collectorStub;
 
     EventServiceImpl(
             final Clock clock,
             final CategoryService categoryService,
             final EventRepository repository,
             @Value("${ewm.timeout.admin}") final Duration adminTimeout,
-            @Value("${ewm.timeout.user}") final Duration userTimeout
+            @Value("${ewm.timeout.user}") final Duration userTimeout,
+            @GrpcClient("collector") UserActionControllerGrpc.UserActionControllerBlockingStub collectorStub
     ) {
         this.clock = clock;
         this.categoryService = categoryService;
         this.repository = repository;
         this.adminTimeout = adminTimeout;
         this.userTimeout = userTimeout;
+        this.collectorStub = collectorStub;
     }
 
     @Override
@@ -73,9 +82,11 @@ class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event getPublishedById(long id) {
-        return repository.findByIdAndState(id, EventState.PUBLISHED)
-                .orElseThrow(() -> new NotFoundException(Event.class, id));
+    public Event getPublishedById(long eventId, long userId) {
+        final Event event = repository.findByIdAndState(eventId, EventState.PUBLISHED)
+                .orElseThrow(() -> new NotFoundException(Event.class, eventId));
+        sendUserActionToCollector(eventId, userId);
+        return event;
     }
 
     @Override
@@ -160,7 +171,7 @@ class EventServiceImpl implements EventService {
     }
 
     private void checkPostUpdateEventDate(final LocalDateTime newEventDate, final LocalDateTime oldEventDate,
-            final Duration timeout) {
+                                          final Duration timeout) {
         if (newEventDate == null && isFreezeTime(oldEventDate, timeout)) {
             throw new NotPossibleException("Event date must be not earlier than in %s from now".formatted(timeout));
         }
@@ -202,5 +213,28 @@ class EventServiceImpl implements EventService {
             throw new AssertionError();
         }
         return categoryService.getById(category.getId());
+    }
+
+    private void sendUserActionToCollector(final long eventId, final long userId) {
+        final UserActionProto userActionProto = createUserActionProto(userId, eventId);
+        log.info("Send user action to collector: userId = {}, eventId = {}, actionType = {}, timestamp = {}",
+                userActionProto.getUserId(),
+                userActionProto.getEventId(),
+                userActionProto.getActionType(),
+                userActionProto.getTimestamp());
+        collectorStub.collectUserAction(userActionProto);
+    }
+
+    private UserActionProto createUserActionProto(final long eventId, final long userId) {
+        final Instant now = Instant.now();
+        return UserActionProto.newBuilder()
+                .setUserId(userId)
+                .setEventId(eventId)
+                .setActionType(ActionTypeProto.ACTION_VIEW)
+                .setTimestamp(Timestamp.newBuilder()
+                        .setSeconds(now.getEpochSecond())
+                        .setNanos(now.getNano())
+                        .build())
+                .build();
     }
 }

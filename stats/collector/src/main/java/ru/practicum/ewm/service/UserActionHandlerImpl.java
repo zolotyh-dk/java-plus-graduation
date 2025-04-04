@@ -6,9 +6,8 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.config.KafkaTopicProperties;
+import ru.practicum.ewm.config.KafkaProperties;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 import ru.practicum.ewm.stats.message.UserActionProto;
@@ -20,7 +19,7 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class UserActionHandlerImpl implements UserActionHandler {
     private final KafkaProducer<String, SpecificRecordBase> producer;
-    private final KafkaTopicProperties kafkaTopicProperties;
+    private final String userActionsTopic;
 
     //Маппинг → Построение сообщения → Логирование → Отправка в Kafka → Обработка ответа
     @Override
@@ -52,7 +51,7 @@ public class UserActionHandlerImpl implements UserActionHandler {
 
     private ProducerRecord<String, SpecificRecordBase> buildProducerRecord(UserActionAvro userActionAvro) {
         return new ProducerRecord<>(
-                kafkaTopicProperties.getActions(),
+                userActionsTopic,
                 null,
                 userActionAvro.getTimestamp().toEpochMilli(),
                 null,

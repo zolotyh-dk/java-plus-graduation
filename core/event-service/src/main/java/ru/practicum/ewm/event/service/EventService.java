@@ -14,7 +14,7 @@ public interface EventService {
 
     Event getById(long id);
 
-    Event getPublishedById(long id);
+    Event getPublishedById(long id, long userId);
 
     Event getByIdAndUserId(long id, long userId);
 

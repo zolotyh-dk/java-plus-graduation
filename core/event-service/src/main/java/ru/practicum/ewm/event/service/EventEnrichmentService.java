@@ -9,8 +9,8 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventPatch;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.client.RequestClient;
-import ru.practicum.ewm.stats.StatsClient;
-import ru.practicum.ewm.stats.ViewStatsDto;
+//import ru.practicum.ewm.stats.StatsClient;
+//import ru.practicum.ewm.stats.ViewStatsDto;
 import ru.practicum.ewm.user.client.UserClient;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
@@ -33,7 +33,7 @@ public class EventEnrichmentService {
     private final EventMapper eventMapper;
     private final UserClient userClient;
     private final RequestClient requestClient;
-    private final StatsClient statsClient;
+//    private final StatsClient statsClient;
 
     public EventFullDto add(long userId, NewEventDto newEventDto) {
         checkUserExists(userId);
@@ -43,11 +43,11 @@ public class EventEnrichmentService {
         return eventMapper.mapToFullDto(savedEvent);
     }
 
-    public EventFullDto getPublishedById(long eventId) {
-        Event event = eventService.getPublishedById(eventId);
+    public EventFullDto getPublishedById(long eventId, long userId) {
+        Event event = eventService.getPublishedById(eventId, userId);
         fetchUser(event);
         fetchConfirmedRequests(event);
-        fetchViews(event);
+//        fetchViews(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -55,7 +55,7 @@ public class EventEnrichmentService {
         Event event = eventService.getByIdAndUserId(id, userId);
         fetchUser(event);
         fetchConfirmedRequests(event);
-        fetchViews(event);
+//        fetchViews(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -63,7 +63,7 @@ public class EventEnrichmentService {
         Event event = eventService.getById(id);
         fetchUser(event);
         fetchConfirmedRequests(event);
-        fetchViews(event);
+//        fetchViews(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -71,7 +71,7 @@ public class EventEnrichmentService {
         List<Event> events = eventService.get(filter);
         fetchUsers(events);
         fetchConfirmedRequests(events);
-        fetchViews(events);
+//        fetchViews(events);
         return eventMapper.mapToFullDto(events);
     }
 
@@ -79,7 +79,7 @@ public class EventEnrichmentService {
         List<Event> events = eventService.get(filter);
         fetchUsers(events);
         fetchConfirmedRequests(events);
-        fetchViews(events);
+//        fetchViews(events);
         return eventMapper.mapToShortDto(events);
     }
 
@@ -88,7 +88,7 @@ public class EventEnrichmentService {
         Event event = eventService.update(id, patch);
         fetchUser(event);
         fetchConfirmedRequests(event);
-        fetchViews(event);
+//        fetchViews(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -97,7 +97,7 @@ public class EventEnrichmentService {
         Event event = eventService.update(eventId, patch, userId);
         fetchUser(event);
         fetchConfirmedRequests(event);
-        fetchViews(event);
+//        fetchViews(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -136,16 +136,16 @@ public class EventEnrichmentService {
         fetchConfirmedRequests(Collections.singletonList(event));
     }
 
-    private void fetchViews(List<Event> events) {
-        List<Long> ids = events.stream().map(Event::getId).toList();
-        List<String> uris = ids.stream().map(id -> "/events/" + id).toList();
-        Map<String, Long> views = statsClient.getStats(VIEWS_FROM, VIEWS_TO, uris, true).stream()
-                .collect(Collectors.toMap(ViewStatsDto::uri, ViewStatsDto::hits));
-        events.forEach(event -> event
-                .setViews(views.getOrDefault("/events/" + event.getId(), 0L)));
-    }
+//    private void fetchViews(List<Event> events) {
+//        List<Long> ids = events.stream().map(Event::getId).toList();
+//        List<String> uris = ids.stream().map(id -> "/events/" + id).toList();
+//        Map<String, Long> views = statsClient.getStats(VIEWS_FROM, VIEWS_TO, uris, true).stream()
+//                .collect(Collectors.toMap(ViewStatsDto::uri, ViewStatsDto::hits));
+//        events.forEach(event -> event
+//                .setViews(views.getOrDefault("/events/" + event.getId(), 0L)));
+//    }
 
-    private void fetchViews(Event event) {
-        fetchViews(Collections.singletonList(event));
-    }
+//    private void fetchViews(Event event) {
+//        fetchViews(Collections.singletonList(event));
+//    }
 }

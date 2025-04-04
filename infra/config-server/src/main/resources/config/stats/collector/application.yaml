@@ -11,9 +11,5 @@ server:
   port: 0
 
 kafka:
-  topic:
-    actions: stats.user-actions.v1
-  bootstrap:
-    server: localhost:9092
-  producer:
-    value-serializer: ru.practicum.ewm.stats.serializer.GeneralAvroSerializer
+  topic: stats.user-actions.v1
+  bootstrap-server: localhost:9092
