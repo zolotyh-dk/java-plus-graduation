@@ -21,7 +21,7 @@ public class UserActionHandlerImpl implements UserActionHandler {
     private final KafkaProducer<String, SpecificRecordBase> producer;
     private final String userActionsTopic;
 
-    //Маппинг → Построение сообщения → Логирование → Отправка в Kafka → Обработка ответа
+    //Маппинг -> Построение сообщения -> Логирование -> Отправка в Kafka -> Обработка ответа
     @Override
     public void handle(UserActionProto userActionProto) {
         UserActionAvro userActionAvro = mapToAvro(userActionProto);
