@@ -21,7 +21,7 @@ public class LikeEnrichmentService {
     private final LikeService likeService;
 
     @GrpcClient("collector")
-    private final UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
+    private UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
 
     public void add(long eventId, long userId) {
         checkUserExists(userId);

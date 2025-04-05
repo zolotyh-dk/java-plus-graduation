@@ -41,7 +41,7 @@ public class EventEnrichmentService {
     private final RequestClient requestClient;
 
     @GrpcClient("collector")
-    private final UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
+    private UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
 
     public EventFullDto add(long userId, NewEventDto newEventDto) {
         checkUserExists(userId);

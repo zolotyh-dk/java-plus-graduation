@@ -32,7 +32,7 @@ public class RequestEnrichmentService {
     private final EventClient eventClient;
 
     @GrpcClient("collector")
-    private final UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
+    private UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
 
     public RequestDto create(long userId, long eventId) {
         checkUserExists(userId);
