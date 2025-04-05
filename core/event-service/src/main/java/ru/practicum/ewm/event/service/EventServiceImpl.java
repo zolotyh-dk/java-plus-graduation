@@ -47,22 +47,19 @@ class EventServiceImpl implements EventService {
     private final EventRepository repository;
     private final Duration adminTimeout;
     private final Duration userTimeout;
-    private final UserActionControllerGrpc.UserActionControllerBlockingStub collectorStub;
 
     EventServiceImpl(
             final Clock clock,
             final CategoryService categoryService,
             final EventRepository repository,
             @Value("${ewm.timeout.admin}") final Duration adminTimeout,
-            @Value("${ewm.timeout.user}") final Duration userTimeout,
-            @GrpcClient("collector") UserActionControllerGrpc.UserActionControllerBlockingStub collectorStub
+            @Value("${ewm.timeout.user}") final Duration userTimeout
     ) {
         this.clock = clock;
         this.categoryService = categoryService;
         this.repository = repository;
         this.adminTimeout = adminTimeout;
         this.userTimeout = userTimeout;
-        this.collectorStub = collectorStub;
     }
 
     @Override
@@ -83,10 +80,8 @@ class EventServiceImpl implements EventService {
 
     @Override
     public Event getPublishedById(long eventId, long userId) {
-        final Event event = repository.findByIdAndState(eventId, EventState.PUBLISHED)
+        return repository.findByIdAndState(eventId, EventState.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException(Event.class, eventId));
-        sendUserActionToCollector(eventId, userId);
-        return event;
     }
 
     @Override
@@ -213,28 +208,5 @@ class EventServiceImpl implements EventService {
             throw new AssertionError();
         }
         return categoryService.getById(category.getId());
-    }
-
-    private void sendUserActionToCollector(final long eventId, final long userId) {
-        final UserActionProto userActionProto = createUserActionProto(userId, eventId);
-        log.info("Send user action to collector: userId = {}, eventId = {}, actionType = {}, timestamp = {}",
-                userActionProto.getUserId(),
-                userActionProto.getEventId(),
-                userActionProto.getActionType(),
-                userActionProto.getTimestamp());
-        collectorStub.collectUserAction(userActionProto);
-    }
-
-    private UserActionProto createUserActionProto(final long eventId, final long userId) {
-        final Instant now = Instant.now();
-        return UserActionProto.newBuilder()
-                .setUserId(userId)
-                .setEventId(eventId)
-                .setActionType(ActionTypeProto.ACTION_VIEW)
-                .setTimestamp(Timestamp.newBuilder()
-                        .setSeconds(now.getEpochSecond())
-                        .setNanos(now.getNano())
-                        .build())
-                .build();
     }
 }

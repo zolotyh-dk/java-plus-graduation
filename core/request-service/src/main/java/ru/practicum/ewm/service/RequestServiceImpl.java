@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @Slf4j
 class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
-    private final UserActionControllerGrpc.UserActionControllerBlockingStub collectorStub;
 
     @Override
     public Request create(long userId, EventFullDto event) {
@@ -53,9 +52,7 @@ class RequestServiceImpl implements RequestService {
         } else {
             newRequest.setStatus(RequestState.CONFIRMED);
         }
-        Request request = requestRepository.save(newRequest);
-        sendUserActionToCollector(event.id(), userId);
-        return request;
+        return requestRepository.save(newRequest);
     }
 
     @Override
@@ -155,28 +152,5 @@ class RequestServiceImpl implements RequestService {
         final List<Request> savedRequests = requestRepository.saveAll(requests);
         log.info("%s set to status %s", savedRequests.size(), status);
         return savedRequests;
-    }
-
-    private void sendUserActionToCollector(final long eventId, final long userId) {
-        final UserActionProto userActionProto = createUserActionProto(userId, eventId);
-        log.info("Send user action to collector: userId = {}, eventId = {}, actionType = {}, timestamp = {}",
-                userActionProto.getUserId(),
-                userActionProto.getEventId(),
-                userActionProto.getActionType(),
-                userActionProto.getTimestamp());
-        collectorStub.collectUserAction(userActionProto);
-    }
-
-    private UserActionProto createUserActionProto(final long eventId, final long userId) {
-        final Instant now = Instant.now();
-        return UserActionProto.newBuilder()
-                .setUserId(userId)
-                .setEventId(eventId)
-                .setActionType(ActionTypeProto.ACTION_REGISTER)
-                .setTimestamp(Timestamp.newBuilder()
-                        .setSeconds(now.getEpochSecond())
-                        .setNanos(now.getNano())
-                        .build())
-                .build();
     }
 }
