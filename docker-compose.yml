@@ -46,6 +46,12 @@ services:
         condition: service_healthy
       request-service:
         condition: service_healthy
+      collector:
+        condition: service_healthy
+      aggregator:
+        condition: service_healthy
+      analyzer:
+        condition: service_healthy
     networks:
       - ewm-net
     environment:
@@ -102,6 +108,8 @@ services:
       event-db:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      collector:
         condition: service_healthy
     networks:
       - ewm-net
@@ -184,6 +192,8 @@ services:
       request-db:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      collector:
         condition: service_healthy
     networks:
       - ewm-net
@@ -303,6 +313,8 @@ services:
         condition: service_healthy
       kafka-init-topics:
         condition: service_completed_successfully
+      aggregator:
+        condition: service_healthy
     networks:
       - ewm-net
     environment:
@@ -323,6 +335,8 @@ services:
         condition: service_healthy
       kafka-init-topics:
         condition: service_completed_successfully
+      analyzer:
+        condition: service_healthy
     networks:
       - ewm-net
     environment:
