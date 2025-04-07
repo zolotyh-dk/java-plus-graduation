@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.stats.message.ActionTypeProto;
 import ru.practicum.ewm.stats.message.UserActionProto;
@@ -18,20 +19,26 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class LikeEnrichmentService {
     private final UserClient userClient;
-    private final LikeService likeService;
+    private final EventService eventService;
 
     @GrpcClient("collector")
     private UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
 
     public void add(long eventId, long userId) {
         checkUserExists(userId);
-        likeService.add(eventId, userId);
+        checkEventExists(eventId);
         sendUserActionToCollector(eventId, userId);
     }
 
     private void checkUserExists(long userId) {
         if (!userClient.existsById(userId)) {
             throw new NotFoundException("User", userId);
+        }
+    }
+
+    private void checkEventExists(long eventId) {
+        if (!eventService.existsById(eventId)) {
+            throw new NotFoundException("Event", eventId);
         }
     }
 
@@ -50,7 +57,7 @@ public class LikeEnrichmentService {
         return UserActionProto.newBuilder()
                 .setUserId(userId)
                 .setEventId(eventId)
-                .setActionType(ActionTypeProto.ACTION_REGISTER)
+                .setActionType(ActionTypeProto.ACTION_LIKE)
                 .setTimestamp(Timestamp.newBuilder()
                         .setSeconds(now.getEpochSecond())
                         .setNanos(now.getNano())

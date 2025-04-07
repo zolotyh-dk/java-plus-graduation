@@ -18,7 +18,7 @@ public class InteractionMatrixRepositoryImpl implements InteractionMatrixReposit
     public double getWeight(long eventId, long userId) {
         Map<Long, Double> userMap = interactionMatrix.get(userId);
         if (userMap != null && userMap.containsKey(eventId)) {
-            double weight = userMap.get(userId);
+            double weight = userMap.get(eventId);
             log.debug("Found weight. userId: {}, eventId: {}, weight: {}", userId, eventId, weight);
             return weight;
         }

@@ -9,7 +9,7 @@ import lombok.ToString;
 import java.time.Instant;
 
 @Entity
-@Table(name = "similarity")
+@Table(name = "similarities")
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")

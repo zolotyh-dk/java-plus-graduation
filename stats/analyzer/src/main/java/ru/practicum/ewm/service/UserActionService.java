@@ -4,9 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.mapper.WeightMapper;
+import ru.practicum.ewm.model.RecommendedEventProjection;
 import ru.practicum.ewm.model.Weight;
 import ru.practicum.ewm.repository.WeightRepository;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
+import ru.practicum.ewm.stats.message.RecommendedEventProto;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,5 +57,14 @@ public class UserActionService {
                 newWeight.getEventId(),
                 newWeight.getWeight());
         weightRepository.save(newWeight);
+    }
+
+    public List<RecommendedEventProto> getTotalInteractionWeight(List<Long> eventIds) {
+        List<RecommendedEventProjection> weights = weightRepository.findTotalWeightByEventIds(eventIds);
+        return weights.stream().map(projection ->
+                        RecommendedEventProto.newBuilder()
+                                .setEventId(projection.getEventId())
+                                .setScore(projection.getScore())
+                                .build()).toList();
     }
 }

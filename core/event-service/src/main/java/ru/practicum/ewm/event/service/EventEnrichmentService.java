@@ -11,30 +11,25 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventPatch;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.client.RequestClient;
-//import ru.practicum.ewm.stats.StatsClient;
-//import ru.practicum.ewm.stats.ViewStatsDto;
 import ru.practicum.ewm.stats.message.ActionTypeProto;
+import ru.practicum.ewm.stats.message.InteractionsCountRequestProto;
+import ru.practicum.ewm.stats.message.RecommendedEventProto;
 import ru.practicum.ewm.stats.message.UserActionProto;
+import ru.practicum.ewm.stats.service.RecommendationsControllerGrpc;
 import ru.practicum.ewm.stats.service.UserActionControllerGrpc;
 import ru.practicum.ewm.user.client.UserClient;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventEnrichmentService {
-    private static final LocalDateTime VIEWS_FROM = LocalDateTime.of(1970, Month.JANUARY, 1, 0, 0, 0);
-    private static final LocalDateTime VIEWS_TO = LocalDateTime.of(2100, Month.DECEMBER, 31, 23, 59, 59);
-
     private final EventService eventService;
     private final EventMapper eventMapper;
     private final UserClient userClient;
@@ -43,11 +38,15 @@ public class EventEnrichmentService {
     @GrpcClient("collector")
     private UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
 
+    @GrpcClient("analyzer")
+    private RecommendationsControllerGrpc.RecommendationsControllerBlockingStub analyzerClient;
+
     public EventFullDto add(long userId, NewEventDto newEventDto) {
         checkUserExists(userId);
         Event event = eventMapper.mapToEvent(userId, newEventDto);
         Event savedEvent = eventService.add(event);
         fetchUser(savedEvent);
+        fetchRatings(savedEvent);
         return eventMapper.mapToFullDto(savedEvent);
     }
 
@@ -55,7 +54,7 @@ public class EventEnrichmentService {
         Event event = eventService.getPublishedById(eventId, userId);
         fetchUser(event);
         fetchConfirmedRequests(event);
-//        fetchViews(event);
+        fetchRatings(event);
         sendUserActionToCollector(eventId, userId);
         return eventMapper.mapToFullDto(event);
     }
@@ -64,7 +63,7 @@ public class EventEnrichmentService {
         Event event = eventService.getByIdAndUserId(id, userId);
         fetchUser(event);
         fetchConfirmedRequests(event);
-//        fetchViews(event);
+        fetchRatings(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -72,7 +71,7 @@ public class EventEnrichmentService {
         Event event = eventService.getById(id);
         fetchUser(event);
         fetchConfirmedRequests(event);
-//        fetchViews(event);
+        fetchRatings(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -80,7 +79,7 @@ public class EventEnrichmentService {
         List<Event> events = eventService.get(filter);
         fetchUsers(events);
         fetchConfirmedRequests(events);
-//        fetchViews(events);
+        fetchRatings(events);
         return eventMapper.mapToFullDto(events);
     }
 
@@ -88,7 +87,7 @@ public class EventEnrichmentService {
         List<Event> events = eventService.get(filter);
         fetchUsers(events);
         fetchConfirmedRequests(events);
-//        fetchViews(events);
+        fetchRatings(events);
         return eventMapper.mapToShortDto(events);
     }
 
@@ -97,7 +96,7 @@ public class EventEnrichmentService {
         Event event = eventService.update(id, patch);
         fetchUser(event);
         fetchConfirmedRequests(event);
-//        fetchViews(event);
+        fetchRatings(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -106,7 +105,7 @@ public class EventEnrichmentService {
         Event event = eventService.update(eventId, patch, userId);
         fetchUser(event);
         fetchConfirmedRequests(event);
-//        fetchViews(event);
+        fetchRatings(event);
         return eventMapper.mapToFullDto(event);
     }
 
@@ -145,18 +144,30 @@ public class EventEnrichmentService {
         fetchConfirmedRequests(Collections.singletonList(event));
     }
 
-//    private void fetchViews(List<Event> events) {
-//        List<Long> ids = events.stream().map(Event::getId).toList();
-//        List<String> uris = ids.stream().map(id -> "/events/" + id).toList();
-//        Map<String, Long> views = statsClient.getStats(VIEWS_FROM, VIEWS_TO, uris, true).stream()
-//                .collect(Collectors.toMap(ViewStatsDto::uri, ViewStatsDto::hits));
-//        events.forEach(event -> event
-//                .setViews(views.getOrDefault("/events/" + event.getId(), 0L)));
-//    }
+    private void fetchRatings(List<Event> events) {
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        InteractionsCountRequestProto request = InteractionsCountRequestProto.newBuilder()
+                .addAllEventId(eventIds)
+                .build();
 
-//    private void fetchViews(Event event) {
-//        fetchViews(Collections.singletonList(event));
-//    }
+        // На основе примера в ТЗ "Обработка потока сообщений":
+        // gRPC потоковый ответ в виде Iterator
+        Iterator<RecommendedEventProto> iterator = analyzerClient.getInteractionsCount(request);
+
+        // Преобразуем iterator -> stream -> Map<eventId, score>
+        Map<Long, Double> eventsRatings = StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false
+        ).collect(Collectors.toMap(
+                RecommendedEventProto::getEventId,
+                RecommendedEventProto::getScore
+        ));
+
+        events.forEach(event -> event.setRating(eventsRatings.getOrDefault(event.getId(), 0.0)));
+    }
+
+    private void fetchRatings(Event event) {
+        fetchRatings(Collections.singletonList(event));
+    }
 
     private void sendUserActionToCollector(final long eventId, final long userId) {
         final UserActionProto userActionProto = createUserActionProto(userId, eventId);

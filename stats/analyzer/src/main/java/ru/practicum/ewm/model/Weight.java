@@ -12,7 +12,7 @@ import java.time.Instant;
  * Максимальный вес взаимодействия пользователя с мероприятием
  */
 @Entity
-@Table(name = "weight")
+@Table(name = "weights")
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
@@ -28,7 +28,7 @@ public class Weight {
     @Column(name = "event_id", nullable = false)
     private long eventId;
 
-    @Column(name = "score", nullable = false)
+    @Column(name = "weight", nullable = false)
     private double weight;
 
     @Column(name = "timestamp", nullable = false)

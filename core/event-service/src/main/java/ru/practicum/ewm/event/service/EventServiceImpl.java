@@ -1,9 +1,7 @@
 package ru.practicum.ewm.event.service;
 
-import com.google.protobuf.Timestamp;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +21,9 @@ import ru.practicum.ewm.exception.FieldValidationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.exception.ParameterValidationException;
-import ru.practicum.ewm.stats.message.ActionTypeProto;
-import ru.practicum.ewm.stats.message.UserActionProto;
-import ru.practicum.ewm.stats.service.UserActionControllerGrpc;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -121,8 +115,8 @@ class EventServiceImpl implements EventService {
 
         if (filter.sort() == EventSort.EVENT_DATE) {
             events.sort(Comparator.comparing(Event::getEventDate));
-        } else if (filter.sort() == EventSort.VIEWS) {
-            events.sort(Comparator.comparing(Event::getViews).reversed());
+        } else if (filter.sort() == EventSort.RATING) {
+            events.sort(Comparator.comparing(Event::getRating).reversed());
         }
 
         return events;

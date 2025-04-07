@@ -24,7 +24,7 @@ public record EventFullDto(
         Boolean paid,
         Boolean requestModeration,
         Long confirmedRequests,
-        Long views,
+        double rating,
 
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdOn,
