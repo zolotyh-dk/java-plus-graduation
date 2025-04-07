@@ -4,13 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.mapper.WeightMapper;
-import ru.practicum.ewm.model.RecommendedEventProjection;
 import ru.practicum.ewm.model.Weight;
 import ru.practicum.ewm.repository.WeightRepository;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 import ru.practicum.ewm.stats.message.RecommendedEventProto;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,15 +57,24 @@ public class UserActionService {
                 newWeight.getUserId(),
                 newWeight.getEventId(),
                 newWeight.getWeight());
-        weightRepository.save(newWeight);
+        Weight weight = weightRepository.save(newWeight);
+        log.debug("Weight saved: {}", weight);
     }
 
     public List<RecommendedEventProto> getTotalInteractionWeight(List<Long> eventIds) {
-        List<RecommendedEventProjection> weights = weightRepository.findTotalWeightByEventIds(eventIds);
-        return weights.stream().map(projection ->
-                        RecommendedEventProto.newBuilder()
-                                .setEventId(projection.getEventId())
-                                .setScore(projection.getScore())
-                                .build()).toList();
+        List<Weight> weights = weightRepository.findAllByEventIdIn(eventIds);
+        log.debug("Weights: {} for list eventIds: {}", weights, eventIds);
+        Map<Long, Double> totalWeights = weights.stream()
+                .collect(Collectors.groupingBy(
+                        Weight::getEventId,
+                        Collectors.summingDouble(Weight::getWeight)
+                ));
+        log.debug("Count of total interaction weights: {}", totalWeights);
+        return totalWeights.entrySet().stream()
+                .map(entry -> RecommendedEventProto.newBuilder()
+                        .setEventId(entry.getKey())
+                        .setScore(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

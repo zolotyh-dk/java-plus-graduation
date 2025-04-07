@@ -146,6 +146,7 @@ public class EventEnrichmentService {
 
     private void fetchRatings(List<Event> events) {
         List<Long> eventIds = events.stream().map(Event::getId).toList();
+        log.debug("Fetching ratings to events: {}", eventIds);
         InteractionsCountRequestProto request = InteractionsCountRequestProto.newBuilder()
                 .addAllEventId(eventIds)
                 .build();
@@ -161,7 +162,7 @@ public class EventEnrichmentService {
                 RecommendedEventProto::getEventId,
                 RecommendedEventProto::getScore
         ));
-
+        log.debug("Fetching ratings for events: {}", eventsRatings);
         events.forEach(event -> event.setRating(eventsRatings.getOrDefault(event.getId(), 0.0)));
     }
 
@@ -170,7 +171,7 @@ public class EventEnrichmentService {
     }
 
     private void sendUserActionToCollector(final long eventId, final long userId) {
-        final UserActionProto userActionProto = createUserActionProto(userId, eventId);
+        final UserActionProto userActionProto = createUserActionProto(eventId, userId);
         log.info("Send user action to collector: userId = {}, eventId = {}, actionType = {}, timestamp = {}",
                 userActionProto.getUserId(),
                 userActionProto.getEventId(),
