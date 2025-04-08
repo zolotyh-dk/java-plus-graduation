@@ -3,7 +3,6 @@ package ru.practicum.ewm.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ru.practicum.ewm.model.RecommendedEvent;
 import ru.practicum.ewm.model.Similarity;
 
 import java.util.List;
@@ -13,22 +12,23 @@ public interface SimilarityRepository extends JpaRepository<Similarity, Long> {
     Optional<Similarity> findByEventAIdAndEventBId(long eventAId, long eventBId);
 
     @Query("""
-        SELECT new ru.practicum.ewm.model.RecommendedEvent(
-            CASE
-                WHEN s.eventAId = :sampleEventId THEN s.eventBId
-                ELSE s.eventAId
-            END, s.score)
-        FROM Similarity s
-        WHERE s.eventAId = :sampleEventId OR s.eventBId = :sampleEventId
-        ORDER BY s.score DESC
-    """)
-    List<RecommendedEvent> findEventsSimilarTo(@Param("sampleEventId") long sampleEventId);
+            SELECT s
+            FROM Similarity s
+            WHERE s.eventAId = :sampleEventId OR s.eventBId = :sampleEventId
+            ORDER BY s.score DESC
+            """)
+    List<Similarity> findSimilarTo(@Param("sampleEventId") long sampleEventId);
 
     @Query("""
-            SELECT s FROM Similarity s
-            WHERE s.eventAId IN :eventIds OR s.eventBId IN :eventIds
-            """)
-    List<Similarity> findAllByEventIdIn(List<Long> eventIds);
+        SELECT
+             CASE
+               WHEN s.eventAId IN :eventIds THEN s.eventBId
+               ELSE s.eventAId
+             END
+         FROM Similarity s
+         WHERE s.eventAId IN :eventIds OR s.eventBId IN :eventIds
+""")
+    List<Long> findAllSimilarEventIds(List<Long> eventIds);
 
     @Query("""
             SELECT s

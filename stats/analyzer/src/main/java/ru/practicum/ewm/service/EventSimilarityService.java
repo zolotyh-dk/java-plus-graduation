@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.mapper.RecommendationsMapper;
 import ru.practicum.ewm.mapper.SimilarityMapper;
 import ru.practicum.ewm.model.RecommendedEvent;
 import ru.practicum.ewm.model.Similarity;
@@ -22,13 +23,14 @@ import java.util.stream.Collectors;
 public class EventSimilarityService {
     private static final int NEIGHBOR_QUANTITY = 5;
 
-    private final SimilarityMapper mapper;
+    private final SimilarityMapper similarityMapper;
+    private final RecommendationsMapper recommendationsMapper;
     private final SimilarityRepository similarityRepository;
     private final WeightRepository weightRepository;
 
     @Transactional
     public void updateOrCreateSimilarity(EventSimilarityAvro eventSimilarityAvro) {
-        Similarity received = mapper.mapToSimilarity(eventSimilarityAvro);
+        Similarity received = similarityMapper.mapToSimilarity(eventSimilarityAvro);
         similarityRepository.findByEventAIdAndEventBId(received.getEventAId(), received.getEventBId()
         ).ifPresentOrElse(
                 old -> updateSimilarity(old, received),
@@ -51,49 +53,45 @@ public class EventSimilarityService {
     }
 
     public List<RecommendedEventProto> getSimilarEvents(long userId, long sampleEventId, int limit) {
-        List<RecommendedEvent> similarities = similarityRepository.findEventsSimilarTo(sampleEventId);
+        List<Similarity> similarities = similarityRepository.findSimilarTo(sampleEventId);
         log.debug("Fetched {} similarities for eventId: {}", similarities.size(), sampleEventId);
 
         Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
-        List<RecommendedEvent> filtered = excludeBothEventInteractedPairs(userId, interactedEventIds, similarities, limit);
-        List<RecommendedEvent> topSimilarities = topNSimilarities(filtered, limit);
+        log.debug("Fetched {} interacted events for user {}", interactedEventIds.size(), userId);
 
-        return topSimilarities.stream()
-                .map(similarity -> RecommendedEventProto.newBuilder()
-                        .setEventId(similarity.getEventAId() == sampleEventId ? similarity.getEventBId() : similarity.getEventAId())
-                        .setScore(similarity.getScore())
-                        .build())
+        List<RecommendedEvent> recommendedEvents = similarities.stream()
+                .map(similarity -> {
+                    // Определяем похожее событие
+                    long otherEventId = similarity.getEventAId() == sampleEventId
+                            ? similarity.getEventBId()
+                            : similarity.getEventAId();
+                    return new RecommendedEvent(otherEventId, similarity.getScore());
+                })
+                .filter(re -> !interactedEventIds.contains(re.eventId()))
+                .limit(limit)
                 .toList();
+        log.debug("Find recommended events for user: {}, similar to event: {} - {}",
+                userId, sampleEventId, recommendedEvents);
+
+        return recommendationsMapper.mapToProto(recommendedEvents);
     }
 
 
-    public List<RecommendedEventProto> getRecommendationsForUser(long userId, int maxResults) {
-        /*
-        1. Выгрузить мероприятия, с которыми пользователь уже взаимодействовал.
-        При этом отсортировать их по дате взаимодействия от новых к старым и ограничить N взаимодействиями.
-        Если пользователь ещё не взаимодействовал ни с одним мероприятием,
-        то рекомендовать нечего — возвращается пустой список.
-         */
-        List<Long> recentlyInteractedEvents = weightRepository.findRecentlyInteractedEventIds(userId, maxResults);
-        log.debug("User {} recently interacted with {} events: {}", userId, recentlyInteractedEvents.size(), recentlyInteractedEvents);
-        if (recentlyInteractedEvents.isEmpty()) {
-            log.debug("No recently interacted events found for user {}", userId);
-            return Collections.emptyList();
-        }
+    public List<RecommendedEventProto> getRecommendationsForUser(long userId, int limit) {
+        // 1. Выгрузить мероприятия, с которыми пользователь уже взаимодействовал.
+        List<Long> recentlyInteractedEvents = findRecentlyInteractedEvents(userId, limit);
 
-        /*
-        2. Найти похожие новые.
-         Найти мероприятия, похожие на те, что отобрали на предыдущем этапе
-         */
-        List<Similarity> similarToInteracted = similarityRepository.findAllByEventIdIn(recentlyInteractedEvents);
-        log.debug("Fetched {} similarities for eventIds: {}", similarToInteracted.size(), recentlyInteractedEvents);
+        // 2. Найти похожие новые.
+        List<Long> similarToInteracted = similarityRepository.findAllSimilarEventIds(recentlyInteractedEvents);
+        log.debug("Fetched {} similar events", similarToInteracted.size());
 
         /* 3. Отобрать те с которыми пользователь не взаимодействовал.
          Отсортировать найденные мероприятия по коэффициенту подобия от большего к меньшему.
          Выбрать из них первые N мероприятий
          */
         Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
-        List<Long> newEventCandidates = excludeBothEventInteractedPairs(userId, interactedEventIds, similarToInteracted, maxResults)
+
+        List<Long> newEventCandidates = excludeBothEventInteractedPairs(userId, interactedEventIds, similarToInteracted, limit)
                 .stream()
                 .map(sim -> {
                     long eventAId = sim.getEventAId();
@@ -170,7 +168,7 @@ public class EventSimilarityService {
         log.debug("Predicted scores for user {}: {}", userId, predictedScores);
         return predictedScores.stream()
                 .sorted(Comparator.comparingDouble(PredictedScore::score).reversed())
-                .limit(maxResults)
+                .limit(limit)
                 .map(ps -> RecommendedEventProto.newBuilder()
                         .setEventId(ps.eventId())
                         .setScore(ps.score())
@@ -178,11 +176,20 @@ public class EventSimilarityService {
                 .toList();
     }
 
+    private List<Long> findRecentlyInteractedEvents(long userId, int limit) {
+        List<Long> recentlyInteractedEvents = weightRepository.findRecentlyInteractedEventIds(userId, limit);
+        log.debug("Fetched {} recently interacted by user: {} events: {}",
+                recentlyInteractedEvents.size(), userId, recentlyInteractedEvents);
+        if (recentlyInteractedEvents.isEmpty()) {
+            log.debug("No recently interacted events found for user {}", userId);
+            return Collections.emptyList();
+        }
+        return recentlyInteractedEvents;
+    }
 
-    private List<Similarity> excludeBothEventInteractedPairs(
-            long userId,
+    private List<Similarity> excludeBothEventInteractedPairs(long userId,
             Set<Long> interactedEventIds,
-            List<Similarity> similarities,
+            List<Long> similarToInteracted,
             int maxResults) {
         log.debug("User with id {} interacted with {} events", userId, interactedEventIds.size());
         List<Similarity> filtered = similarities.stream()
