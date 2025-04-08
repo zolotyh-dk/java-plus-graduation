@@ -30,7 +30,7 @@ public class EventSimilarityKafkaListener {
                 for (ConsumerRecord<String, EventSimilarityAvro> record : similarities) {
                     try {
                         logReceivedRecord(record);
-                        eventSimilarityService.process(record.value());
+                        eventSimilarityService.updateOrCreateSimilarity(record.value());
                     } catch (Exception e) {
                         log.error("Exception while processing event similarity: key: {}, value: {}",
                                 record.key(), record.value(), e);

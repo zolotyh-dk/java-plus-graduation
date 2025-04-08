@@ -5,10 +5,19 @@ import org.mapstruct.Mapping;
 import ru.practicum.ewm.model.Similarity;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 
+import java.time.Instant;
+
 @Mapper(componentModel = "spring")
 public interface SimilarityMapper {
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "eventAId", source = "eventA")
-    @Mapping(target = "eventBId", source = "eventB")
-    Similarity mapToSimilarity(EventSimilarityAvro similarity);
+    default Similarity mapToSimilarity(EventSimilarityAvro similarityAvro) {
+        long smallerId = Math.min(similarityAvro.getEventA(), similarityAvro.getEventB());
+        long biggerId = Math.max(similarityAvro.getEventA(), similarityAvro.getEventB());
+
+        Similarity similarity = new Similarity();
+        similarity.setEventAId(smallerId);
+        similarity.setEventBId(biggerId);
+        similarity.setScore(similarityAvro.getScore());
+        similarity.setTimestamp(similarityAvro.getTimestamp());
+        return similarity;
+    }
 }

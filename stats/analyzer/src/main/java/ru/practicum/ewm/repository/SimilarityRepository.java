@@ -3,6 +3,7 @@ package ru.practicum.ewm.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import ru.practicum.ewm.model.RecommendedEvent;
 import ru.practicum.ewm.model.Similarity;
 
 import java.util.List;
@@ -12,9 +13,16 @@ public interface SimilarityRepository extends JpaRepository<Similarity, Long> {
     Optional<Similarity> findByEventAIdAndEventBId(long eventAId, long eventBId);
 
     @Query("""
-            SELECT s FROM Similarity s
-            WHERE s.eventAId = :eventId OR s.eventBId = :eventId""")
-    List<Similarity> findAllByEventId(Long eventId);
+        SELECT new ru.practicum.ewm.model.RecommendedEvent(
+            CASE
+                WHEN s.eventAId = :sampleEventId THEN s.eventBId
+                ELSE s.eventAId
+            END, s.score)
+        FROM Similarity s
+        WHERE s.eventAId = :sampleEventId OR s.eventBId = :sampleEventId
+        ORDER BY s.score DESC
+    """)
+    List<RecommendedEvent> findEventsSimilarTo(@Param("sampleEventId") long sampleEventId);
 
     @Query("""
             SELECT s FROM Similarity s

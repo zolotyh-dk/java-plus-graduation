@@ -25,8 +25,8 @@ public class Similarity {
     @Column(name = "event_b_id", nullable = false)
     private long eventBId;
 
-    @Column(name = "similarity", nullable = false)
-    private double similarity;
+    @Column(name = "rating", nullable = false)
+    private double score;
 
     @Column(name = "timestamp", nullable = false)
     private Instant timestamp;

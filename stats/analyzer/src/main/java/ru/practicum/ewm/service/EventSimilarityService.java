@@ -3,7 +3,9 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.mapper.SimilarityMapper;
+import ru.practicum.ewm.model.RecommendedEvent;
 import ru.practicum.ewm.model.Similarity;
 import ru.practicum.ewm.model.Weight;
 import ru.practicum.ewm.repository.SimilarityRepository;
@@ -20,51 +22,46 @@ import java.util.stream.Collectors;
 public class EventSimilarityService {
     private static final int NEIGHBOR_QUANTITY = 5;
 
-    private final SimilarityMapper similarityMapper;
+    private final SimilarityMapper mapper;
     private final SimilarityRepository similarityRepository;
     private final WeightRepository weightRepository;
 
-    public void process(EventSimilarityAvro eventSimilarityAvro) {
-        Similarity newSimilarity = similarityMapper.mapToSimilarity(eventSimilarityAvro);
-        updateOrCreateSimilarity(newSimilarity);
-    }
-
-    private void updateOrCreateSimilarity(Similarity newSimilarity) {
-        similarityRepository.findByEventAIdAndEventBId(newSimilarity.getEventAId(), newSimilarity.getEventBId()
+    @Transactional
+    public void updateOrCreateSimilarity(EventSimilarityAvro eventSimilarityAvro) {
+        Similarity received = mapper.mapToSimilarity(eventSimilarityAvro);
+        similarityRepository.findByEventAIdAndEventBId(received.getEventAId(), received.getEventBId()
         ).ifPresentOrElse(
-                existingSimilarity -> updateSimilarity(existingSimilarity, newSimilarity),
-                () -> saveNewSimilarity(newSimilarity)
+                old -> updateSimilarity(old, received),
+                () -> saveNewSimilarity(received)
         );
     }
 
-    private void updateSimilarity(Similarity existingSimilarity, Similarity newSimilarity) {
-        log.info("Updating similarity: eventAId: {}, eventBId: {}, oldSimilarity: {}, newSimilarity: {}",
-                existingSimilarity.getEventAId(),
-                existingSimilarity.getEventBId(),
-                existingSimilarity.getSimilarity(),
-                newSimilarity.getSimilarity());
-        existingSimilarity.setSimilarity(newSimilarity.getSimilarity());
-        existingSimilarity.setTimestamp(newSimilarity.getTimestamp());
-        similarityRepository.save(existingSimilarity);
+    private void updateSimilarity(Similarity old, Similarity received) {
+        log.info("Updating similarity: event-A id: {}, event-B id: {}, old score: {}, new score: {}",
+                old.getEventAId(), old.getEventBId(), old.getScore(), received.getScore());
+        old.setScore(received.getScore());
+        old.setTimestamp(received.getTimestamp());
+        similarityRepository.save(old);
     }
 
-    private void saveNewSimilarity(Similarity newSimilarity) {
-        log.info("Saving new similarity: eventAId: {}, eventBId: {}, similarity: {}",
-                newSimilarity.getEventAId(),
-                newSimilarity.getEventBId(),
-                newSimilarity.getSimilarity());
-        similarityRepository.save(newSimilarity);
+    private void saveNewSimilarity(Similarity received) {
+        log.info("Saving new similarity: eventAId: {}, eventBId: {}, score: {}",
+                received.getEventAId(), received.getEventBId(), received.getScore());
+        similarityRepository.save(received);
     }
 
-    public List<RecommendedEventProto> getSimilarEvents(long userId, long eventId, int maxResults) {
-        List<Similarity> similarities = similarityRepository.findAllByEventId(eventId);
-        log.debug("Fetched {} similarities for eventId: {}", similarities.size(), eventId);
+    public List<RecommendedEventProto> getSimilarEvents(long userId, long sampleEventId, int limit) {
+        List<RecommendedEvent> similarities = similarityRepository.findEventsSimilarTo(sampleEventId);
+        log.debug("Fetched {} similarities for eventId: {}", similarities.size(), sampleEventId);
 
-        List<Similarity> filteredOrderedAndLimited = excludeBothEventInteractedPairs(userId, similarities, maxResults);
-        return filteredOrderedAndLimited.stream()
+        Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
+        List<RecommendedEvent> filtered = excludeBothEventInteractedPairs(userId, interactedEventIds, similarities, limit);
+        List<RecommendedEvent> topSimilarities = topNSimilarities(filtered, limit);
+
+        return topSimilarities.stream()
                 .map(similarity -> RecommendedEventProto.newBuilder()
-                        .setEventId(similarity.getEventAId() == eventId ? similarity.getEventBId() : similarity.getEventAId())
-                        .setScore(similarity.getSimilarity())
+                        .setEventId(similarity.getEventAId() == sampleEventId ? similarity.getEventBId() : similarity.getEventAId())
+                        .setScore(similarity.getScore())
                         .build())
                 .toList();
     }
@@ -95,7 +92,8 @@ public class EventSimilarityService {
          Отсортировать найденные мероприятия по коэффициенту подобия от большего к меньшему.
          Выбрать из них первые N мероприятий
          */
-        List<Long> newEventCandidates = excludeBothEventInteractedPairs(userId, similarToInteracted, maxResults)
+        Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
+        List<Long> newEventCandidates = excludeBothEventInteractedPairs(userId, interactedEventIds, similarToInteracted, maxResults)
                 .stream()
                 .map(sim -> {
                     long eventAId = sim.getEventAId();
@@ -110,8 +108,6 @@ public class EventSimilarityService {
         Важно найти именно максимально похожие мероприятия, с которыми пользователь уже взаимодействовал.
         На основе их оценок и будет предсказываться новая.
          */
-        Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
-        log.debug("User {} has interacted with {} events: {}", userId, interactedEventIds.size(), interactedEventIds);
 
         List<Similarity> similarToNewCandidates = similarityRepository
                 .findSimilaritiesBetweenNewAndInteracted(newEventCandidates, recentlyInteractedEvents);
@@ -123,7 +119,7 @@ public class EventSimilarityService {
             long interactedId = newEventId == s.getEventAId() ? s.getEventBId() : s.getEventAId();
             newToSimilarInteractedMap
                     .computeIfAbsent(newEventId, id -> new ArrayList<>())
-                    .add(new Neighbor(interactedId, s.getSimilarity()));
+                    .add(new Neighbor(interactedId, s.getScore()));
         }
 
         /* 5. Получить оценки.
@@ -183,21 +179,29 @@ public class EventSimilarityService {
     }
 
 
-    private List<Similarity> excludeBothEventInteractedPairs(long userId, List<Similarity> similarities, int maxResults) {
-        Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
+    private List<Similarity> excludeBothEventInteractedPairs(
+            long userId,
+            Set<Long> interactedEventIds,
+            List<Similarity> similarities,
+            int maxResults) {
         log.debug("User with id {} interacted with {} events", userId, interactedEventIds.size());
-        List<Similarity> filteredOrderedAndLimited = similarities.stream()
+        List<Similarity> filtered = similarities.stream()
                 .filter(similarity -> {
                     boolean interactedWithEventA = interactedEventIds.contains(similarity.getEventAId());
                     boolean interactedWithEventB = interactedEventIds.contains(similarity.getEventBId());
                     return !(interactedWithEventA && interactedWithEventB);
                 })
-                .sorted(Comparator.comparing(Similarity::getSimilarity).reversed())
-                .limit(maxResults)
                 .toList();
-        log.debug("Filtered out {} similarities based on user interactions", similarities.size() - filteredOrderedAndLimited.size());
-        log.debug("Sorted and limited to {} similarities", filteredOrderedAndLimited.size());
-        return filteredOrderedAndLimited;
+        log.debug("Filtered out {} similarities based on user interactions", similarities.size() - filtered.size());
+        log.debug("Sorted and limited to {} similarities", filtered.size());
+        return filtered;
+    }
+
+    private List<Similarity> topNSimilarities(List<Similarity> similarities, int limit) {
+        return similarities.stream()
+                .sorted(Comparator.comparing(Similarity::getScore).reversed())
+                .limit(limit)
+                .toList();
     }
 
     private record PredictedScore(
