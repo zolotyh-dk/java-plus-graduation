@@ -27,6 +27,7 @@ public class EventSimilarityService {
     private final RecommendationsMapper recommendationsMapper;
     private final SimilarityRepository similarityRepository;
     private final WeightRepository weightRepository;
+    private final UserActionService userActionService;
 
     @Transactional
     public void updateOrCreateSimilarity(EventSimilarityAvro eventSimilarityAvro) {
@@ -53,7 +54,7 @@ public class EventSimilarityService {
     }
 
     public List<RecommendedEventProto> getSimilarEvents(long userId, long sampleEventId, int limit) {
-        List<Similarity> similarities = similarityRepository.findSimilarTo(sampleEventId);
+        List<Similarity> similarities = similarityRepository.findAllByEventId(sampleEventId);
         log.debug("Fetched {} similarities for eventId: {}", similarities.size(), sampleEventId);
 
         Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
@@ -78,102 +79,69 @@ public class EventSimilarityService {
 
 
     public List<RecommendedEventProto> getRecommendationsForUser(long userId, int limit) {
-        // 1. Выгрузить мероприятия, с которыми пользователь уже взаимодействовал.
+        // 1. Выгрузить мероприятия, с которыми пользователь уже взаимодействовал
         List<Long> recentlyInteractedEvents = findRecentlyInteractedEvents(userId, limit);
 
         // 2. Найти похожие новые.
-        List<Long> similarToInteracted = similarityRepository.findAllSimilarEventIds(recentlyInteractedEvents);
-        log.debug("Fetched {} similar events", similarToInteracted.size());
+        List<Similarity> similarToInteracted = similarityRepository.findAllBetweenCandidatesAndInteracted(recentlyInteractedEvents);
+        log.debug("Fetched {} similarities ", similarToInteracted.size());
 
-        /* 3. Отобрать те с которыми пользователь не взаимодействовал.
-         Отсортировать найденные мероприятия по коэффициенту подобия от большего к меньшему.
-         Выбрать из них первые N мероприятий
-         */
-        Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
+        // 3. Отобрать те с которыми пользователь не взаимодействовал
+        Set<Long> interacted = weightRepository.findAllEventIdByUserId(userId);
+        log.debug("Fetched {} interacted events for user {}", interacted.size(), userId);
+        List<Long> recommendedCandidates = getNotInteractedEvents(similarToInteracted, interacted, limit);
 
-        List<Long> newEventCandidates = excludeBothEventInteractedPairs(userId, interactedEventIds, similarToInteracted, limit)
-                .stream()
-                .map(sim -> {
-                    long eventAId = sim.getEventAId();
-                    long eventBId = sim.getEventBId();
-                    return recentlyInteractedEvents.contains(eventAId) ? eventBId : eventAId;
-                })
-                .toList();
-        log.debug("New event candidates for user {}: {}", userId, newEventCandidates);
+        // 4. Найти K ближайших (по similarity) соседей для кандидатов среди просмотренных мероприятий
+        List<Similarity> interactedSimilarToCandidates = similarityRepository
+                .findAllBetweenCandidatesAndInteracted(new HashSet<>(recommendedCandidates), interacted);
+        Set<Long> neighborEventIds = interactedSimilarToCandidates.stream()
+                .map(s ->
+                        recommendedCandidates.contains(s.getEventAId()) ? s.getEventBId() : s.getEventAId())
+                .collect(Collectors.toSet());
 
-        /* 4. Найти K ближайших соседей.
-        Выгрузить K просмотренных мероприятий, максимально похожих на предсказываемое.
-        Важно найти именно максимально похожие мероприятия, с которыми пользователь уже взаимодействовал.
-        На основе их оценок и будет предсказываться новая.
-         */
-
-        List<Similarity> similarToNewCandidates = similarityRepository
-                .findSimilaritiesBetweenNewAndInteracted(newEventCandidates, recentlyInteractedEvents);
-        log.debug("Found {} similarities between new events and interacted events", similarToNewCandidates.size());
-
-        Map<Long, List<Neighbor>> newToSimilarInteractedMap = new HashMap<>();
-        for (Similarity s : similarToNewCandidates) {
-            long newEventId = newEventCandidates.contains(s.getEventAId()) ? s.getEventAId() : s.getEventBId();
-            long interactedId = newEventId == s.getEventAId() ? s.getEventBId() : s.getEventAId();
-            newToSimilarInteractedMap
-                    .computeIfAbsent(newEventId, id -> new ArrayList<>())
-                    .add(new Neighbor(interactedId, s.getScore()));
-        }
-
-        /* 5. Получить оценки.
-         Для всех мероприятий, полученных на предыдущем этапе, выгрузить оценки, которые поставил пользователь.
-         */
-        List<Weight> weights = weightRepository.findByUserIdAndEventIdIn(userId, interactedEventIds);
-        log.debug("Fetched {} weights for user {} interacted events: {}", weights.size(), userId, weights);
-        Map<Long, Double> weightsMap = weights.stream()
+        // 5. Для всех соседей, полученных на предыдущем этапе, выгрузить оценки, которые поставил пользователь
+        List<Weight> neighborWeights = userActionService.getByUserIdAndEventIds(userId, neighborEventIds);
+        Map<Long, Double> weightsMap = neighborWeights.stream()
                 .collect(Collectors.toMap(Weight::getEventId, Weight::getWeight));
 
-        /* 6. Вычислить сумму взвешенных оценок.
-         Используя коэффициенты подобия, полученные на шаге 4, и оценки, полученные на шаге 5,
-         вычислить сумму взвешенных оценок (перемножить оценки мероприятий с их коэффициентами подобия,
-         все полученные произведения сложить).
-         */
-        List<PredictedScore> predictedScores = new ArrayList<>();
-        for (Map.Entry<Long, List<Neighbor>> entry : newToSimilarInteractedMap.entrySet()) {
-            long newEventId = entry.getKey();
+        // 6. Собираем Map candidateId → List<Neighbor> с весами
+        Map<Long, List<Neighbor>> candidateNeighborsMap = buildCandidateNeighborsMap(
+                interactedSimilarToCandidates,
+                new HashSet<>(recommendedCandidates),
+                weightsMap
+        );
+
+        List<RecommendedEvent> recommendedEvents = new ArrayList<>();
+        for (Map.Entry<Long, List<Neighbor>> entry : candidateNeighborsMap.entrySet()) {
+            long candidateId = entry.getKey();
+
             List<Neighbor> neighbors = entry.getValue().stream()
-                    .filter(neighbor -> weightsMap.containsKey(neighbor.eventId()))
                     .sorted(Comparator.comparingDouble(Neighbor::similarity).reversed())
                     .limit(NEIGHBOR_QUANTITY)
                     .toList();
 
             double numerator = 0;
             double denominator = 0;
+
             for (Neighbor neighbor : neighbors) {
-                /* 7. Вычислить сумму коэффициентов подобия.
-                Сложить все коэффициенты подобия, полученные на шаге 4.
-                */
-                double similarity = neighbor.similarity();
-                denominator += similarity;
-                double weight = weightsMap.get(neighbor.eventId());
-                numerator += weight * similarity;
+                // 7. Вычислить сумму взвешенных оценок (перемножить оценки мероприятий с их коэффициентами подобия, все полученные произведения сложить).
+                numerator += neighbor.weight() * neighbor.similarity();
+                // 8. Вычислить сумму коэффициентов подобия. Сложить все коэффициенты подобия, полученные на шаге 4.
+                denominator += neighbor.similarity();
             }
 
-            /* 8. Вычислить оценку нового мероприятия.
-            Поделить сумму взвешенных оценок на сумму коэффициентов.
-             */
-            if (denominator > 0) {
-                double predicted = numerator / denominator;
-                log.debug("Predicted score for newEventId {} = {}", newEventId, predicted);
-                predictedScores.add(new PredictedScore(newEventId, predicted));
-            } else {
-                log.debug("Skipping prediction for newEventId {} due to zero denominator", newEventId);
-            }
+            // 9. Вычислить оценку нового мероприятия. Поделить сумму взвешенных оценок на сумму коэффициентов.
+            double score = numerator / denominator;
+            log.debug("Predicted score for candidate {} = {}", candidateId, score);
+            recommendedEvents.add(new RecommendedEvent(candidateId, score));
         }
-        log.debug("Predicted scores for user {}: {}", userId, predictedScores);
-        return predictedScores.stream()
-                .sorted(Comparator.comparingDouble(PredictedScore::score).reversed())
+        recommendedEvents = recommendedEvents.stream()
+                .sorted(Comparator.comparingDouble(RecommendedEvent::score).reversed())
                 .limit(limit)
-                .map(ps -> RecommendedEventProto.newBuilder()
-                        .setEventId(ps.eventId())
-                        .setScore(ps.score())
-                        .build())
                 .toList();
+
+        log.debug("Recommended events for user {}: {}", userId, recommendedEvents);
+        return recommendationsMapper.mapToProto(recommendedEvents);
     }
 
     private List<Long> findRecentlyInteractedEvents(long userId, int limit) {
@@ -187,37 +155,50 @@ public class EventSimilarityService {
         return recentlyInteractedEvents;
     }
 
-    private List<Similarity> excludeBothEventInteractedPairs(long userId,
-            Set<Long> interactedEventIds,
-            List<Long> similarToInteracted,
-            int maxResults) {
-        log.debug("User with id {} interacted with {} events", userId, interactedEventIds.size());
-        List<Similarity> filtered = similarities.stream()
-                .filter(similarity -> {
-                    boolean interactedWithEventA = interactedEventIds.contains(similarity.getEventAId());
-                    boolean interactedWithEventB = interactedEventIds.contains(similarity.getEventBId());
-                    return !(interactedWithEventA && interactedWithEventB);
-                })
-                .toList();
-        log.debug("Filtered out {} similarities based on user interactions", similarities.size() - filtered.size());
-        log.debug("Sorted and limited to {} similarities", filtered.size());
-        return filtered;
-    }
-
-    private List<Similarity> topNSimilarities(List<Similarity> similarities, int limit) {
+    private List<Long> getNotInteractedEvents(List<Similarity> similarities, Set<Long> interacted, int limit) {
         return similarities.stream()
-                .sorted(Comparator.comparing(Similarity::getScore).reversed())
+                .map(s -> {
+                    Long a = s.getEventAId();
+                    Long b = s.getEventBId();
+                    if (interacted.contains(a) && !interacted.contains(b)) {
+                        return b; // Если взаимодействовали с A, но не с B — кандидат B
+                    }
+                    if (interacted.contains(b) && !interacted.contains(a)) {
+                        return a; // Если взаимодействовали с B, но не с A — кандидат A
+                    }
+                    return null; // Если взаимодействовали с A и B — не подходит
+                })
+                .filter(Objects::nonNull)
+                .distinct()
                 .limit(limit)
                 .toList();
     }
 
-    private record PredictedScore(
-            long eventId,
-            double score) {
+    private Map<Long, List<Neighbor>> buildCandidateNeighborsMap(
+            List<Similarity> similarities,
+            Set<Long> recommendedCandidateIds,
+            Map<Long, Double> weightsMap
+    ) {
+        Map<Long, List<Neighbor>> candidateNeighborsMap = new HashMap<>();
+
+        for (Similarity s : similarities) {
+            long candidateId = recommendedCandidateIds.contains(s.getEventAId()) ? s.getEventAId() : s.getEventBId();
+            long neighborId = candidateId == s.getEventAId() ? s.getEventBId() : s.getEventAId();
+            double similarity = s.getScore();
+            Double weight = weightsMap.get(neighborId);
+
+            if (weight != null) {
+                candidateNeighborsMap
+                        .computeIfAbsent(candidateId, id -> new ArrayList<>())
+                        .add(new Neighbor(neighborId, similarity, weight));
+            }
+        }
+        return candidateNeighborsMap;
     }
 
     private record Neighbor(
             long eventId,
-            double similarity) {
+            double similarity,
+            double weight) {
     }
 }

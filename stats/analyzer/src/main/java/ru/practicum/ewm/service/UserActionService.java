@@ -11,6 +11,7 @@ import ru.practicum.ewm.stats.message.RecommendedEventProto;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,17 +21,36 @@ public class UserActionService {
     private final WeightRepository weightRepository;
     private final WeightMapper weightMapper;
 
-    public void process(UserActionAvro userActionAvro) {
+    public void updateOrCreateWeight(UserActionAvro userActionAvro) {
         Weight newWeight = weightMapper.toWeight(userActionAvro);
-        updateOrCreateWeight(newWeight);
-    }
-
-    private void updateOrCreateWeight(Weight newWeight) {
         weightRepository.findByEventIdAndUserId(newWeight.getEventId(), newWeight.getUserId())
                 .ifPresentOrElse(
                         existingWeight -> updateIfGreater(existingWeight, newWeight),
                         () -> saveNewWeight(newWeight)
                 );
+    }
+
+    public List<RecommendedEventProto> getTotalInteractionWeight(List<Long> eventIds) {
+        List<Weight> weights = weightRepository.findAllByEventIdIn(eventIds);
+        log.debug("Weights: {} for list eventIds: {}", weights, eventIds);
+        Map<Long, Double> totalWeights = weights.stream()
+                .collect(Collectors.groupingBy(
+                        Weight::getEventId,
+                        Collectors.summingDouble(Weight::getWeight)
+                ));
+        log.debug("Count of total interaction weights: {}", totalWeights);
+        return totalWeights.entrySet().stream()
+                .map(entry -> RecommendedEventProto.newBuilder()
+                        .setEventId(entry.getKey())
+                        .setScore(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public List<Weight> getByUserIdAndEventIds(long userId, Set<Long> eventIds) {
+        List<Weight> weights = weightRepository.findByUserIdAndEventIdIn(userId, eventIds);
+        log.debug("Fetched {} weights for user: {} interacted events: {}", weights.size(), userId, weights);
+        return weights;
     }
 
     private void updateIfGreater(Weight existingWeight, Weight newWeight) {
@@ -59,22 +79,5 @@ public class UserActionService {
                 newWeight.getWeight());
         Weight weight = weightRepository.save(newWeight);
         log.debug("Weight saved: {}", weight);
-    }
-
-    public List<RecommendedEventProto> getTotalInteractionWeight(List<Long> eventIds) {
-        List<Weight> weights = weightRepository.findAllByEventIdIn(eventIds);
-        log.debug("Weights: {} for list eventIds: {}", weights, eventIds);
-        Map<Long, Double> totalWeights = weights.stream()
-                .collect(Collectors.groupingBy(
-                        Weight::getEventId,
-                        Collectors.summingDouble(Weight::getWeight)
-                ));
-        log.debug("Count of total interaction weights: {}", totalWeights);
-        return totalWeights.entrySet().stream()
-                .map(entry -> RecommendedEventProto.newBuilder()
-                        .setEventId(entry.getKey())
-                        .setScore(entry.getValue())
-                        .build())
-                .collect(Collectors.toList());
     }
 }

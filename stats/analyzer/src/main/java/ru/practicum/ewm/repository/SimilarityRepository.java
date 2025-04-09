@@ -7,6 +7,7 @@ import ru.practicum.ewm.model.Similarity;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface SimilarityRepository extends JpaRepository<Similarity, Long> {
     Optional<Similarity> findByEventAIdAndEventBId(long eventAId, long eventBId);
@@ -14,21 +15,20 @@ public interface SimilarityRepository extends JpaRepository<Similarity, Long> {
     @Query("""
             SELECT s
             FROM Similarity s
-            WHERE s.eventAId = :sampleEventId OR s.eventBId = :sampleEventId
+            WHERE s.eventAId = :eventId
+               OR s.eventBId = :eventId
             ORDER BY s.score DESC
             """)
-    List<Similarity> findSimilarTo(@Param("sampleEventId") long sampleEventId);
+    List<Similarity> findAllByEventId(@Param("eventId") long eventId);
 
     @Query("""
-        SELECT
-             CASE
-               WHEN s.eventAId IN :eventIds THEN s.eventBId
-               ELSE s.eventAId
-             END
-         FROM Similarity s
-         WHERE s.eventAId IN :eventIds OR s.eventBId IN :eventIds
-""")
-    List<Long> findAllSimilarEventIds(List<Long> eventIds);
+        SELECT s
+        FROM Similarity s
+        WHERE s.eventAId IN :eventIds
+           OR s.eventBId IN :eventIds
+        ORDER BY s.score DESC
+    """)
+    List<Similarity> findAllBetweenCandidatesAndInteracted(@Param("eventIds") List<Long> eventIds);
 
     @Query("""
             SELECT s
@@ -38,8 +38,8 @@ public interface SimilarityRepository extends JpaRepository<Similarity, Long> {
                 OR
                 (s.eventBId IN :newEventIds AND s.eventAId IN :interactedEventIds)
             """)
-    List<Similarity> findSimilaritiesBetweenNewAndInteracted(
-            @Param("newEventIds") List<Long> newEventIds,
-            @Param("interactedEventIds") List<Long> interactedEventIds);
+    List<Similarity> findAllBetweenCandidatesAndInteracted(
+            @Param("newEventIds") Set<Long> newEventIds,
+            @Param("interactedEventIds") Set<Long> interactedEventIds);
 
 }

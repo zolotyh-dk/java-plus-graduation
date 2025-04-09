@@ -30,7 +30,7 @@ public class UserActionKafkaListener {
                 for (ConsumerRecord<String, UserActionAvro> userAction : userActions) {
                     try {
                         logReceivedRecord(userAction);
-                        userActionService.process(userAction.value());
+                        userActionService.updateOrCreateWeight(userAction.value());
                     } catch (Exception e) {
                         log.error("Exception while processing user actions: key: {}, value: {}",
                                 userAction.key(), userAction.value(), e);
