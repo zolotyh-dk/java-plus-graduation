@@ -26,10 +26,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Validated
@@ -146,6 +143,19 @@ class EventServiceImpl implements EventService {
         checkPostUpdateEventDate(patch.eventDate(), event.getEventDate(), userTimeout);
         return updateInternally(event, patch);
     }
+
+    @Override
+    public List<Event> getAvailableUpcomingEventsByIds(Collection<Long> ids) {
+        return repository.findAllById(ids).stream()
+                .filter(event -> event.getEventDate().isAfter(now()))
+                .filter(event -> {
+                    long limit = event.getParticipantLimit();
+                    return limit == 0 || (limit - event.getConfirmedRequests() > 0); // есть места
+                })
+                .filter(event -> event.getState() == EventState.PUBLISHED)
+                .toList();
+    }
+
 
     @Override
     public boolean existsById(long eventId) {

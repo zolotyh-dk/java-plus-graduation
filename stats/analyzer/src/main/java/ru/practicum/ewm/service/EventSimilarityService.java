@@ -57,8 +57,7 @@ public class EventSimilarityService {
         List<Similarity> similarities = similarityRepository.findAllByEventId(sampleEventId);
         log.debug("Fetched {} similarities for eventId: {}", similarities.size(), sampleEventId);
 
-        Set<Long> interactedEventIds = weightRepository.findAllEventIdByUserId(userId);
-        log.debug("Fetched {} interacted events for user {}", interactedEventIds.size(), userId);
+        Set<Long> interactedEventIds = userActionService.getAllEventIdByUserId(userId);
 
         List<RecommendedEvent> recommendedEvents = similarities.stream()
                 .map(similarity -> {
@@ -79,24 +78,29 @@ public class EventSimilarityService {
 
 
     public List<RecommendedEventProto> getRecommendationsForUser(long userId, int limit) {
-        // 1. Выгрузить мероприятия, с которыми пользователь уже взаимодействовал
-        List<Long> recentlyInteractedEvents = findRecentlyInteractedEvents(userId, limit);
+        // 1. Выгрузить мероприятия, с которыми пользователь недавно взаимодействовал
+        List<Long> lastInteracted = userActionService.getLastInteractedEvents(userId, limit);
+        if (lastInteracted.isEmpty()) {
+            log.debug("No interacted events found for user {}", userId);
+            return Collections.emptyList();
+        }
 
-        // 2. Найти похожие новые.
-        List<Similarity> similarToInteracted = similarityRepository.findAllBetweenCandidatesAndInteracted(recentlyInteractedEvents);
+        // 2. Найти похожие новые
+        List<Similarity> similarToInteracted = similarityRepository.findAllBetweenCandidatesAndInteracted(lastInteracted);
         log.debug("Fetched {} similarities ", similarToInteracted.size());
 
         // 3. Отобрать те с которыми пользователь не взаимодействовал
-        Set<Long> interacted = weightRepository.findAllEventIdByUserId(userId);
-        log.debug("Fetched {} interacted events for user {}", interacted.size(), userId);
+        Set<Long> interacted = userActionService.getAllEventIdByUserId(userId);
         List<Long> recommendedCandidates = getNotInteractedEvents(similarToInteracted, interacted, limit);
 
-        // 4. Найти K ближайших (по similarity) соседей для кандидатов среди просмотренных мероприятий
+        // 4. Найти K ближайших (по similarity) соседей для кандидатов в рекомендацию среди просмотренных мероприятий
         List<Similarity> interactedSimilarToCandidates = similarityRepository
                 .findAllBetweenCandidatesAndInteracted(new HashSet<>(recommendedCandidates), interacted);
         Set<Long> neighborEventIds = interactedSimilarToCandidates.stream()
                 .map(s ->
-                        recommendedCandidates.contains(s.getEventAId()) ? s.getEventBId() : s.getEventAId())
+                        recommendedCandidates.contains(s.getEventAId()) ?
+                                s.getEventBId() :
+                                s.getEventAId())
                 .collect(Collectors.toSet());
 
         // 5. Для всех соседей, полученных на предыдущем этапе, выгрузить оценки, которые поставил пользователь
@@ -104,7 +108,7 @@ public class EventSimilarityService {
         Map<Long, Double> weightsMap = neighborWeights.stream()
                 .collect(Collectors.toMap(Weight::getEventId, Weight::getWeight));
 
-        // 6. Собираем Map candidateId → List<Neighbor> с весами
+        // 6. Map candidateId → List<Neighbor>
         Map<Long, List<Neighbor>> candidateNeighborsMap = buildCandidateNeighborsMap(
                 interactedSimilarToCandidates,
                 new HashSet<>(recommendedCandidates),
@@ -120,18 +124,8 @@ public class EventSimilarityService {
                     .limit(NEIGHBOR_QUANTITY)
                     .toList();
 
-            double numerator = 0;
-            double denominator = 0;
-
-            for (Neighbor neighbor : neighbors) {
-                // 7. Вычислить сумму взвешенных оценок (перемножить оценки мероприятий с их коэффициентами подобия, все полученные произведения сложить).
-                numerator += neighbor.weight() * neighbor.similarity();
-                // 8. Вычислить сумму коэффициентов подобия. Сложить все коэффициенты подобия, полученные на шаге 4.
-                denominator += neighbor.similarity();
-            }
-
             // 9. Вычислить оценку нового мероприятия. Поделить сумму взвешенных оценок на сумму коэффициентов.
-            double score = numerator / denominator;
+            double score = calculateScore(neighbors);
             log.debug("Predicted score for candidate {} = {}", candidateId, score);
             recommendedEvents.add(new RecommendedEvent(candidateId, score));
         }
@@ -144,16 +138,7 @@ public class EventSimilarityService {
         return recommendationsMapper.mapToProto(recommendedEvents);
     }
 
-    private List<Long> findRecentlyInteractedEvents(long userId, int limit) {
-        List<Long> recentlyInteractedEvents = weightRepository.findRecentlyInteractedEventIds(userId, limit);
-        log.debug("Fetched {} recently interacted by user: {} events: {}",
-                recentlyInteractedEvents.size(), userId, recentlyInteractedEvents);
-        if (recentlyInteractedEvents.isEmpty()) {
-            log.debug("No recently interacted events found for user {}", userId);
-            return Collections.emptyList();
-        }
-        return recentlyInteractedEvents;
-    }
+
 
     private List<Long> getNotInteractedEvents(List<Similarity> similarities, Set<Long> interacted, int limit) {
         return similarities.stream()
@@ -161,10 +146,10 @@ public class EventSimilarityService {
                     Long a = s.getEventAId();
                     Long b = s.getEventBId();
                     if (interacted.contains(a) && !interacted.contains(b)) {
-                        return b; // Если взаимодействовали с A, но не с B — кандидат B
+                        return b; // Если взаимодействовали с A, но не с B — кандидат для рекомендации B
                     }
                     if (interacted.contains(b) && !interacted.contains(a)) {
-                        return a; // Если взаимодействовали с B, но не с A — кандидат A
+                        return a; // Если взаимодействовали с B, но не с A — кандидат для рекомендации A
                     }
                     return null; // Если взаимодействовали с A и B — не подходит
                 })
@@ -194,6 +179,18 @@ public class EventSimilarityService {
             }
         }
         return candidateNeighborsMap;
+    }
+
+    private double calculateScore(List<Neighbor> neighbors) {
+        double numerator = 0.0;
+        double denominator = 0.0;
+        for (Neighbor neighbor : neighbors) {
+            // 7. Вычислить сумму взвешенных оценок (перемножить оценки мероприятий с их коэффициентами подобия, все полученные произведения сложить)
+            numerator += neighbor.weight() * neighbor.similarity();
+            // 8. Вычислить сумму коэффициентов подобия. Сложить все коэффициенты подобия, полученные на шаге 4
+            denominator += neighbor.similarity();
+        }
+        return denominator == 0.0 ? 0.0 : numerator / denominator;
     }
 
     private record Neighbor(

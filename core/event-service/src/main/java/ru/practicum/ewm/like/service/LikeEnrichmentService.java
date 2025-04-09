@@ -43,8 +43,8 @@ public class LikeEnrichmentService {
     }
 
     private void sendUserActionToCollector(final long eventId, final long userId) {
-        final UserActionProto userActionProto = createUserActionProto(userId, eventId);
-        log.info("Send user action to collector: userId = {}, eventId = {}, actionType = {}, timestamp = {}",
+        final UserActionProto userActionProto = createUserActionProto(eventId, userId);
+        log.info("Send user action to collector: userId: {}, eventId: {}, actionType: {}, timestamp: {}",
                 userActionProto.getUserId(),
                 userActionProto.getEventId(),
                 userActionProto.getActionType(),

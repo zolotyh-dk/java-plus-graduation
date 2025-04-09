@@ -11,10 +11,7 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventPatch;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.client.RequestClient;
-import ru.practicum.ewm.stats.message.ActionTypeProto;
-import ru.practicum.ewm.stats.message.InteractionsCountRequestProto;
-import ru.practicum.ewm.stats.message.RecommendedEventProto;
-import ru.practicum.ewm.stats.message.UserActionProto;
+import ru.practicum.ewm.stats.message.*;
 import ru.practicum.ewm.stats.service.RecommendationsControllerGrpc;
 import ru.practicum.ewm.stats.service.UserActionControllerGrpc;
 import ru.practicum.ewm.user.client.UserClient;
@@ -107,6 +104,25 @@ public class EventEnrichmentService {
         fetchConfirmedRequests(event);
         fetchRatings(event);
         return eventMapper.mapToFullDto(event);
+    }
+
+    public List<EventShortDto> getRecommendationsForUser(long userId, int maxResults) {
+        checkUserExists(userId);
+        UserPredictionsRequestProto requestProto = UserPredictionsRequestProto.newBuilder()
+                .setUserId(userId)
+                .setMaxResults(maxResults)
+                .build();
+        Iterator<RecommendedEventProto> iterator = analyzerClient.getRecommendationsForUser(requestProto);
+        List<Long> eventIds = StreamSupport
+                .stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
+                .map(RecommendedEventProto::getEventId)
+                .toList();
+
+        List<Event> events = eventService.getAvailableUpcomingEventsByIds(eventIds);
+        fetchUsers(events);
+        fetchConfirmedRequests(events);
+        fetchRatings(events);
+        return eventMapper.mapToShortDto(events);
     }
 
     public boolean existsById(long eventId) {

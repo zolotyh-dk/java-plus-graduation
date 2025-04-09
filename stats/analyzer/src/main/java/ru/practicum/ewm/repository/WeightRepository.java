@@ -14,7 +14,11 @@ public interface WeightRepository extends JpaRepository<Weight, Long> {
 
     List<Weight> findAllByEventIdIn(List<Long> eventIds);
 
-    Set<Long> findAllEventIdByUserId(long userId);
+    @Query("""
+            SELECT w.eventId FROM Weight w
+            WHERE w.userId = :userId
+            """)
+    Set<Long> findAllEventIdByUserId(@Param("userId")long userId);
 
     @Query("""
             SELECT w.eventId FROM Weight w
@@ -22,7 +26,7 @@ public interface WeightRepository extends JpaRepository<Weight, Long> {
             ORDER BY w.timestamp DESC
             LIMIT :maxResults
             """)
-    List<Long> findRecentlyInteractedEventIds(@Param("userId") long userId, @Param("maxResults") int maxResults);
+    List<Long> findLastInteractedEventIds(@Param("userId") long userId, @Param("maxResults") int maxResults);
 
     @Query("""
             SELECT w

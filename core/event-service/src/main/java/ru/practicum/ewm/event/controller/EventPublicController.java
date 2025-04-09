@@ -59,4 +59,16 @@ class EventPublicController extends HttpRequestResponseLogger {
         logHttpResponse(httpRequest, dtos);
         return dtos;
     }
+
+    @GetMapping("/recommendations")
+    public List<EventShortDto> getRecommendations(
+            @RequestHeader("X-EWM-USER-ID") long userId,
+            @RequestParam(defaultValue = "5") int maxResults,
+            HttpServletRequest httpRequest
+    ) {
+        logHttpRequest(httpRequest);
+        List<EventShortDto> recommendations = facade.getRecommendationsForUser(userId, maxResults);
+        logHttpResponse(httpRequest, recommendations);
+        return recommendations;
+    }
 }

@@ -53,6 +53,19 @@ public class UserActionService {
         return weights;
     }
 
+    public Set<Long> getAllEventIdByUserId(long userId) {
+        Set<Long> eventIds = weightRepository.findAllEventIdByUserId(userId);
+        log.debug("Fetched {} events for user {}", eventIds.size(), userId);
+        return eventIds;
+    }
+
+    public List<Long> getLastInteractedEvents(long userId, int limit) {
+        List<Long> lastInteracted = weightRepository.findLastInteractedEventIds(userId, limit);
+        log.debug("Fetched {} last interacted by user: {} events: {}",
+                lastInteracted.size(), userId, lastInteracted);
+        return lastInteracted;
+    }
+
     private void updateIfGreater(Weight existingWeight, Weight newWeight) {
         if (newWeight.getWeight() > existingWeight.getWeight()) {
             log.info("Updating weight for userId: {}, eventId: {} from {} to {}",
