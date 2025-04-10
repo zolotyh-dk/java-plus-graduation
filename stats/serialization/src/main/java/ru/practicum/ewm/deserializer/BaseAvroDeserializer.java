@@ -34,4 +34,4 @@ public class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deser
             throw new SerializationException("Deserialization exception data from topic [" + topic + "]", e);
         }
     }
-} 
+}
