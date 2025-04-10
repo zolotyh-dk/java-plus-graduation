@@ -1,11 +1,8 @@
 package ru.practicum.ewm.mapper;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import ru.practicum.ewm.model.Similarity;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
-
-import java.time.Instant;
 
 @Mapper(componentModel = "spring")
 public interface SimilarityMapper {
