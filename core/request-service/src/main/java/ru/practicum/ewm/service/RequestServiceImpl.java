@@ -1,13 +1,11 @@
 package ru.practicum.ewm.service;
 
-import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -15,11 +13,8 @@ import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.model.Request;
 import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.request.dto.RequestState;
-import ru.practicum.ewm.stats.message.ActionTypeProto;
-import ru.practicum.ewm.stats.message.UserActionProto;
-import ru.practicum.ewm.stats.service.UserActionControllerGrpc;
+import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,6 +110,11 @@ class RequestServiceImpl implements RequestService {
         List<EventRequestStats> confirmedRequestStats = requestRepository.getConfirmedRequestStats(eventIds);
         return confirmedRequestStats.stream()
                 .collect(Collectors.toMap(EventRequestStats::getId, EventRequestStats::getRequests));
+    }
+
+    @Override
+    public boolean existsByRequesterIdAndEventId(long userId, long requestId) {
+        return requestRepository.existsByRequesterIdAndEventIdAndStatus(userId, requestId, RequestState.CONFIRMED);
     }
 
     private void requireAllExist(final List<Long> ids, final List<Request> requests) {

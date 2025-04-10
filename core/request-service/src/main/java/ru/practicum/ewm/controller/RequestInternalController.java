@@ -3,10 +3,7 @@ package ru.practicum.ewm.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.exception.HttpRequestResponseLogger;
 import ru.practicum.ewm.service.RequestService;
 
@@ -25,5 +22,13 @@ public class RequestInternalController extends HttpRequestResponseLogger {
         Map<Long, Long> confirmedRequests = service.getConfirmedRequestsStats(eventIds);
         logHttpResponse(request, confirmedRequests);
         return confirmedRequests;
+    }
+
+    @GetMapping("/exist")
+    public boolean existConfirmedParticipation(@RequestParam long userId, @RequestParam long eventId, HttpServletRequest request) {
+        logHttpRequest(request, userId);
+        boolean isExists = service.existsByRequesterIdAndEventId(userId, eventId);
+        logHttpResponse(request, isExists);
+        return isExists;
     }
 }

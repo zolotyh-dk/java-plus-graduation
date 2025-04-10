@@ -24,4 +24,6 @@ public interface RequestService {
                                                        long userId);
 
     Map<Long, Long> getConfirmedRequestsStats(List<Long> eventIds);
+
+    boolean existsByRequesterIdAndEventId(long userId, long requestId);
 }

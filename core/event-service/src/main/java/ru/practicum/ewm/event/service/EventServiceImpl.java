@@ -146,11 +146,14 @@ class EventServiceImpl implements EventService {
 
     @Override
     public List<Event> getAvailableUpcomingEventsByIds(Collection<Long> ids) {
-        return repository.findAllById(ids).stream()
+        log.debug("Fetching available upcoming events by id {}", ids);
+        List<Event> events =  repository.findAllById(ids);
+        log.debug("Before filtration has {} events", events.size());
+        return events.stream()
                 .filter(event -> event.getEventDate().isAfter(now()))
                 .filter(event -> {
                     long limit = event.getParticipantLimit();
-                    return limit == 0 || (limit - event.getConfirmedRequests() > 0); // есть места
+                    return limit == 0 || (limit - event.getConfirmedRequests() > 0);
                 })
                 .filter(event -> event.getState() == EventState.PUBLISHED)
                 .toList();

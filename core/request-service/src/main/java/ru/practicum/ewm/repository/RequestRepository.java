@@ -26,4 +26,6 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             "where r.eventId in :ids and r.status = 'CONFIRMED' " +
             "group by r.eventId")
     List<EventRequestStats> getConfirmedRequestStats(@Param("ids") List<Long> ids);
+
+    boolean existsByRequesterIdAndEventIdAndStatus(long userId, long requestId, RequestState requestState);
 }

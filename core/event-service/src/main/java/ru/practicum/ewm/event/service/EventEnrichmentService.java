@@ -117,7 +117,7 @@ public class EventEnrichmentService {
                 .stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
                 .map(RecommendedEventProto::getEventId)
                 .toList();
-
+        log.debug("Received recommended eventIds from analyzer: {}", eventIds);
         List<Event> events = eventService.getAvailableUpcomingEventsByIds(eventIds);
         fetchUsers(events);
         fetchConfirmedRequests(events);

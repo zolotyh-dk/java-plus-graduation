@@ -7,6 +7,8 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ParameterValidationException;
+import ru.practicum.ewm.request.client.RequestClient;
 import ru.practicum.ewm.stats.message.ActionTypeProto;
 import ru.practicum.ewm.stats.message.UserActionProto;
 import ru.practicum.ewm.stats.service.UserActionControllerGrpc;
@@ -20,6 +22,7 @@ import java.time.Instant;
 public class LikeEnrichmentService {
     private final UserClient userClient;
     private final EventService eventService;
+    private final RequestClient requestClient;
 
     @GrpcClient("collector")
     private UserActionControllerGrpc.UserActionControllerBlockingStub collectorClient;
@@ -27,6 +30,9 @@ public class LikeEnrichmentService {
     public void add(long eventId, long userId) {
         checkUserExists(userId);
         checkEventExists(eventId);
+        if (!requestClient.existsConfirmedParticipation(eventId, userId)) {
+            throw new ParameterValidationException("eventId", "user not participant of event", eventId);
+        }
         sendUserActionToCollector(eventId, userId);
     }
 
