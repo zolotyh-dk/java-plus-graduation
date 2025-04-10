@@ -7,7 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.service.UserActionService;
+import ru.practicum.ewm.service.UserActionServiceImpl;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
@@ -19,7 +19,7 @@ import java.util.List;
 public class UserActionKafkaListener {
     private final KafkaConsumer<String, UserActionAvro> consumer;
     private final String userActionsTopic;
-    private final UserActionService userActionService;
+    private final UserActionServiceImpl userActionServiceImpl;
 
     public void startListen() {
         try {
@@ -30,7 +30,7 @@ public class UserActionKafkaListener {
                 for (ConsumerRecord<String, UserActionAvro> userAction : userActions) {
                     try {
                         logReceivedRecord(userAction);
-                        userActionService.updateOrCreateWeight(userAction.value());
+                        userActionServiceImpl.updateOrCreateWeight(userAction.value());
                     } catch (Exception e) {
                         log.error("Exception while processing user actions: key: {}, value: {}",
                                 userAction.key(), userAction.value(), e);
