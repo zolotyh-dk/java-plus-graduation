@@ -15,6 +15,10 @@ public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
     private final EncoderFactory encoderFactory;
     private BinaryEncoder encoder;
 
+    public GeneralAvroSerializer() {
+        this(EncoderFactory.get());
+    }
+
     public GeneralAvroSerializer(EncoderFactory encoderFactory) {
         this.encoderFactory = encoderFactory;
     }
