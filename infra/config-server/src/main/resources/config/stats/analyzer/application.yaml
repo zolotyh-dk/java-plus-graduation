@@ -10,7 +10,6 @@ kafka:
     user-actions: user-actions
     event-similarity: event-similarity
 
-
 spring:
   jpa:
     hibernate.ddl-auto: none
