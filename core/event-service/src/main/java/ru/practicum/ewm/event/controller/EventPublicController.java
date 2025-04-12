@@ -5,44 +5,27 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.ewm.exception.HttpRequestResponseLogger;
-import ru.practicum.ewm.event.dto.EventSort;
-import ru.practicum.ewm.event.dto.EventState;
-import ru.practicum.ewm.event.dto.EventFilter;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.EventShortDto;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.service.EventEnrichmentService;
-import ru.practicum.ewm.stats.EndpointHitDto;
-import ru.practicum.ewm.stats.StatsClient;
+import ru.practicum.ewm.exception.HttpRequestResponseLogger;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @RestController
 @RequestMapping("/events")
 @RequiredArgsConstructor
 class EventPublicController extends HttpRequestResponseLogger {
-    private static final String APP = "main-service";
-
     private final EventEnrichmentService facade;
-    private final StatsClient statsClient;
-    private final Clock clock;
 
     @GetMapping("{eventId}")
     EventFullDto get(
             @PathVariable final long eventId,
+            @RequestHeader("X-EWM-USER-ID") long userId,
             final HttpServletRequest httpRequest) {
         logHttpRequest(httpRequest);
-        final EventFullDto dto = facade.getPublishedById(eventId);
-        statsClient.saveHit(new EndpointHitDto(APP, httpRequest.getRequestURI(), httpRequest.getRemoteAddr(),
-                LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS)));
+        final EventFullDto dto = facade.getPublishedById(eventId, userId);
         logHttpResponse(httpRequest, dto);
         return dto;
     }
@@ -73,9 +56,19 @@ class EventPublicController extends HttpRequestResponseLogger {
                 .size(size)
                 .build();
         final List<EventShortDto> dtos = facade.getShortEvents(filter);
-        statsClient.saveHit(new EndpointHitDto(APP, httpRequest.getRequestURI(), httpRequest.getRemoteAddr(),
-                LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS)));
         logHttpResponse(httpRequest, dtos);
         return dtos;
+    }
+
+    @GetMapping("/recommendations")
+    public List<EventShortDto> getRecommendations(
+            @RequestHeader("X-EWM-USER-ID") long userId,
+            @RequestParam(defaultValue = "5") int maxResults,
+            HttpServletRequest httpRequest
+    ) {
+        logHttpRequest(httpRequest, userId);
+        List<EventShortDto> recommendations = facade.getRecommendationsForUser(userId, maxResults);
+        logHttpResponse(httpRequest, recommendations);
+        return recommendations;
     }
 }

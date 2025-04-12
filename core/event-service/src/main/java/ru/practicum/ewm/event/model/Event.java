@@ -62,7 +62,7 @@ public class Event {
     private long confirmedRequests;
 
     @Transient
-    private long views;
+    private double rating;
 
     @NotNull
     private LocalDateTime createdOn;

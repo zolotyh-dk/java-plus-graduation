@@ -26,10 +26,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Validated
@@ -73,9 +70,9 @@ class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event getPublishedById(long id) {
-        return repository.findByIdAndState(id, EventState.PUBLISHED)
-                .orElseThrow(() -> new NotFoundException(Event.class, id));
+    public Event getPublishedById(long eventId, long userId) {
+        return repository.findByIdAndState(eventId, EventState.PUBLISHED)
+                .orElseThrow(() -> new NotFoundException(Event.class, eventId));
     }
 
     @Override
@@ -115,8 +112,8 @@ class EventServiceImpl implements EventService {
 
         if (filter.sort() == EventSort.EVENT_DATE) {
             events.sort(Comparator.comparing(Event::getEventDate));
-        } else if (filter.sort() == EventSort.VIEWS) {
-            events.sort(Comparator.comparing(Event::getViews).reversed());
+        } else if (filter.sort() == EventSort.RATING) {
+            events.sort(Comparator.comparing(Event::getRating).reversed());
         }
 
         return events;
@@ -148,6 +145,22 @@ class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<Event> getAvailableUpcomingEventsByIds(Collection<Long> ids) {
+        log.debug("Fetching available upcoming events by id {}", ids);
+        List<Event> events =  repository.findAllById(ids);
+        log.debug("Before filtration has {} events", events.size());
+        return events.stream()
+                .filter(event -> event.getEventDate().isAfter(now()))
+                .filter(event -> {
+                    long limit = event.getParticipantLimit();
+                    return limit == 0 || (limit - event.getConfirmedRequests() > 0);
+                })
+                .filter(event -> event.getState() == EventState.PUBLISHED)
+                .toList();
+    }
+
+
+    @Override
     public boolean existsById(long eventId) {
         return repository.existsById(eventId);
     }
@@ -160,7 +173,7 @@ class EventServiceImpl implements EventService {
     }
 
     private void checkPostUpdateEventDate(final LocalDateTime newEventDate, final LocalDateTime oldEventDate,
-            final Duration timeout) {
+                                          final Duration timeout) {
         if (newEventDate == null && isFreezeTime(oldEventDate, timeout)) {
             throw new NotPossibleException("Event date must be not earlier than in %s from now".formatted(timeout));
         }

@@ -104,7 +104,7 @@ public class EventMapper {
                 .paid(event.isPaid())
                 .requestModeration(event.isRequestModeration())
                 .confirmedRequests(event.getConfirmedRequests())
-                .views(event.getViews())
+                .rating(event.getRating())
                 .createdOn(event.getCreatedOn())
                 .publishedOn(event.getPublishedOn())
                 .state(event.getState())
@@ -133,7 +133,7 @@ public class EventMapper {
                 .annotation(event.getAnnotation())
                 .paid(event.isPaid())
                 .confirmedRequests(event.getConfirmedRequests())
-                .views(event.getViews())
+                .rating(event.getRating())
                 .build();
     }
 

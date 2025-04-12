@@ -6,7 +6,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -14,6 +13,7 @@ import ru.practicum.ewm.exception.NotPossibleException;
 import ru.practicum.ewm.model.Request;
 import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.request.dto.RequestState;
+import ru.practicum.ewm.request.dto.UpdateEventRequestStatusDto;
 
 import java.util.List;
 import java.util.Map;
@@ -110,6 +110,11 @@ class RequestServiceImpl implements RequestService {
         List<EventRequestStats> confirmedRequestStats = requestRepository.getConfirmedRequestStats(eventIds);
         return confirmedRequestStats.stream()
                 .collect(Collectors.toMap(EventRequestStats::getId, EventRequestStats::getRequests));
+    }
+
+    @Override
+    public boolean existsByRequesterIdAndEventId(long userId, long requestId) {
+        return requestRepository.existsByRequesterIdAndEventIdAndStatus(userId, requestId, RequestState.CONFIRMED);
     }
 
     private void requireAllExist(final List<Long> ids, final List<Request> requests) {

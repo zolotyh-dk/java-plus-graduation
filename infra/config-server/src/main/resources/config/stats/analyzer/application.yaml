@@ -1,0 +1,49 @@
+server:
+  port: 0
+
+kafka:
+  topic:
+    actions: stats.user-actions.v1
+    similarity: stats.events-similarity.v1
+  bootstrap-server: localhost:9092
+  group-id:
+    user-actions: user-actions
+    event-similarity: event-similarity
+
+spring:
+  jpa:
+    hibernate.ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  sql.init.mode: always
+
+logging.level:
+  org.springframework.orm.jpa: INFO
+  org.springframework.transaction: INFO
+  ru.practicum: DEBUG
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: default
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://analyzer-db:5432/analyzer
+    username: root
+    password: root
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:analyzer
+    username: stats
+    password: stats

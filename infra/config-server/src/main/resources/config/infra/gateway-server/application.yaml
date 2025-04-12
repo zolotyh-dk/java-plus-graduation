@@ -20,7 +20,7 @@ spring:
         - id: event-service-route
           uri: lb://event-service
           predicates:
-            - Path=/admin/events/**, /users/*/events/**, /events/**, /admin/compilations/**, /compilations/**, /categories/**, /admin/categories/**
+            - Path=/admin/events/**, /users/*/events/**, /events/**, /admin/compilations/**, /compilations/**, /categories/**, /admin/categories/**, /events/*/like/**
 
 server:
   port: 8080

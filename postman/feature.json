@@ -1085,7 +1085,7 @@
 									"const source = pm.collectionVariables.get('response');\r",
 									"const target = pm.response.json()[0];\r",
 									"\r",
-									"pm.test(\"Событие должно содержать поля: id, initiator, title, category, eventDate, annotation, paid, confirmedRequests, views\", function () {\r",
+									"pm.test(\"Событие должно содержать поля: id, initiator, title, category, eventDate, annotation, paid, confirmedRequests, rating\", function () {\r",
 									"pm.expect(target).to.have.property('id');\r",
 									"pm.expect(target).to.have.property('initiator');\r",
 									"pm.expect(target).to.have.property('title');\r",
@@ -1094,7 +1094,7 @@
 									"pm.expect(target).to.have.property('annotation');\r",
 									"pm.expect(target).to.have.property('paid');\r",
 									"pm.expect(target).to.have.property('confirmedRequests');\r",
-									"pm.expect(target).to.have.property('views');\r",
+									"pm.expect(target).to.have.property('rating');\r",
 									"});\r",
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -1106,7 +1106,7 @@
 									"    pm.expect(source.annotation).equal(target.annotation, 'Аннотация события должна соответствовать аннотации события с указанным идентификатором');\r",
 									"    pm.expect(source.paid.toString()).equal(target.paid.toString(), 'Стоимость события должна соответствовать стоимости события с указанным идентификатором');\r",
 									"    pm.expect(source.confirmedRequests).equal(target.confirmedRequests, 'Количество подтверждённых заявок должно соответствовать количеству подтверждённых заявок для события с указанным идентификатором');\r",
-									"    pm.expect(source.views).equal(target.views, 'Количество просмотров должно соответствовать количеству просмотров для события с указанным идентификатором');\r",
+									"    pm.expect(source.rating).equal(target.rating, 'Рейтинг должен соответствовать рейтингу для события с указанным идентификатором');\r",
 									"});"
 								],
 								"type": "text/javascript",
@@ -1418,7 +1418,7 @@
 									"const source = pm.collectionVariables.get('response');\r",
 									"const target = pm.response.json()[0];\r",
 									"\r",
-									"pm.test(\"Событие должно содержать поля: id, initiator, title, category, eventDate, annotation, paid, confirmedRequests, views\", function () {\r",
+									"pm.test(\"Событие должно содержать поля: id, initiator, title, category, eventDate, annotation, paid, confirmedRequests, rating\", function () {\r",
 									"pm.expect(target).to.have.property('id');\r",
 									"pm.expect(target).to.have.property('initiator');\r",
 									"pm.expect(target).to.have.property('title');\r",
@@ -1427,7 +1427,7 @@
 									"pm.expect(target).to.have.property('annotation');\r",
 									"pm.expect(target).to.have.property('paid');\r",
 									"pm.expect(target).to.have.property('confirmedRequests');\r",
-									"pm.expect(target).to.have.property('views');\r",
+									"pm.expect(target).to.have.property('rating');\r",
 									"});\r",
 									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
@@ -1439,7 +1439,7 @@
 									"    pm.expect(source.annotation).equal(target.annotation, 'Аннотация события должна соответствовать аннотации события с указанным идентификатором');\r",
 									"    pm.expect(source.paid.toString()).equal(target.paid.toString(), 'Стоимость события должна соответствовать стоимости события с указанным идентификатором');\r",
 									"    pm.expect(source.confirmedRequests).equal(target.confirmedRequests, 'Количество подтверждённых заявок должно соответствовать количеству подтверждённых заявок для события с указанным идентификатором');\r",
-									"    pm.expect(source.views).equal(target.views, 'Количество просмотров должно соответствовать количеству просмотров для события с указанным идентификатором');\r",
+									"    pm.expect(source.rating).equal(target.rating, 'Рейтинг должен соответствовать рейтингу для события с указанным идентификатором');\r",
 									"});"
 								],
 								"type": "text/javascript",
@@ -1502,7 +1502,7 @@
 								{
 									"key": "sort",
 									"value": "EVENT_DATE",
-									"description": "может принимать значения EVENT_DATE и VIEWS (по умолчанию сортировка по дате публикации)"
+									"description": "может принимать значения EVENT_DATE и RATING (по умолчанию сортировка по дате публикации)"
 								},
 								{
 									"key": "from",

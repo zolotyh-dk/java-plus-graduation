@@ -7,6 +7,19 @@ spring:
         format_sql: true
   sql.init.mode: always
 
+grpc:
+  client:
+    collector:
+      address: 'discovery:///collector'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+    analyzer:
+      address: 'discovery:///analyzer'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
 logging.level:
   org.springframework.orm.jpa: INFO
   org.springframework.transaction: INFO
